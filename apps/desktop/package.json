@@ -1,0 +1,28 @@
+{
+  "name": "@pension/desktop",
+  "version": "1.0.0",
+  "private": true,
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:5174 && electron .\"",
+    "electron:build": "npm run build && electron-builder"
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.7.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.7.0",
+    "concurrently": "^9.1.0",
+    "electron": "^35.0.0",
+    "electron-builder": "^25.1.8",
+    "typescript": "~5.8.3",
+    "vite": "^7.0.6",
+    "wait-on": "^8.0.0"
+  }
+}

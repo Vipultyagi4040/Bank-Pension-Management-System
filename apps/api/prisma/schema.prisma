@@ -1,0 +1,356 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+  INACTIVE
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  USER_MANAGER
+  PENSION_MANAGER
+  POLICY_MANAGER
+  REPORT_VIEWER
+}
+
+enum GrievanceStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum JeevanPramaanStatus {
+  NOT_SUBMITTED
+  SUBMITTED
+  VERIFIED
+  REJECTED
+  EXPIRED
+}
+
+enum NotificationAudience {
+  ALL
+  SELECTED
+}
+
+model Pensioner {
+  id                    String               @id @default(cuid())
+  employeeId            String               @unique
+  mobile                String               @unique
+  email                 String?
+  name                  String
+  gender                String?
+  dateOfBirth            DateTime?
+  maritalStatus          String?
+  fatherName             String?
+  panNumber              String?
+  aadhaarNumber          String?
+  bloodGroup             String?
+  emergencyContactName   String?
+  emergencyContactMobile String?
+  department             String?
+  designation            String?
+  dateOfJoining           DateTime?
+  dateOfRetirement        DateTime?
+  pensionType            String?
+  bankAccountNumber      String?
+  bankIfscCode           String?
+  bankAccountHolderName  String?
+  bankBranchName         String?
+  bankBranchAddress      String?
+  bankAccountType        String?
+  nomineeName            String?
+  nomineeRelation        String?
+  nomineeShare           String?
+  address                String?
+  profilePhotoUrl        String?
+  idCardUrl              String?
+  status                 UserStatus           @default(PENDING)
+  registrationCompleted Boolean              @default(false)
+  approvedAt             DateTime?
+  approvedById           String?
+  deletedAt              DateTime?
+  createdBy              String?
+  updatedBy              String?
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
+  pensionDetails         PensionDetail[]
+  monthlyPensions        MonthlyPension[]
+  pensionSlips           PensionSlip[]
+  policies               PensionerPolicy[]
+  grievances             Grievance[]
+  jeevanPramaan          JeevanPramaanRecord[]
+  notificationReceipts  NotificationReceipt[]
+  leads                  Lead[]
+  activities             UserActivity[]
+
+  @@index([status])
+  @@index([deletedAt])
+  @@index([createdBy])
+}
+
+model PensionDetail {
+  id               String      @id @default(cuid())
+  pensionerId      String
+  ppoNumber        String
+  category         String?
+  pensionType      String?
+  basicPension     Decimal?    @db.Decimal(12, 2)
+  da               Decimal?    @db.Decimal(12, 2)
+  hra              Decimal?    @db.Decimal(12, 2)
+  medicalAllowance Decimal?    @db.Decimal(12, 2)
+  otherAllowances  Decimal?    @db.Decimal(12, 2)
+  deductions       Decimal?    @db.Decimal(12, 2)
+  totalPension     Decimal?    @db.Decimal(12, 2)
+  pensionAmount    Decimal     @db.Decimal(12, 2)
+  effectiveFrom    DateTime
+  effectiveTo      DateTime?
+  bankName         String?
+  branchName       String?
+  accountLastFour  String?
+  isCurrent        Boolean     @default(true)
+  status           String      @default("ACTIVE")
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  pensioner        Pensioner   @relation(fields: [pensionerId], references: [id], onDelete: Cascade)
+  monthlyPensions  MonthlyPension[]
+
+  @@index([pensionerId, effectiveFrom])
+}
+
+model PensionSlip {
+  id          String    @id @default(cuid())
+  pensionerId String
+  month       Int
+  year        Int
+  grossAmount Decimal   @db.Decimal(12, 2)
+  deductions  Decimal   @db.Decimal(12, 2)
+  netAmount   Decimal   @db.Decimal(12, 2)
+  basicPension Decimal  @db.Decimal(12, 2)
+  da          Decimal   @db.Decimal(12, 2)
+  hra         Decimal   @db.Decimal(12, 2)
+  medicalAllowance Decimal @db.Decimal(12, 2)
+  otherAllowances Decimal @db.Decimal(12, 2)
+  documentUrl String?
+  createdAt   DateTime  @default(now())
+  pensioner   Pensioner @relation(fields: [pensionerId], references: [id], onDelete: Cascade)
+
+  @@unique([pensionerId, month, year])
+}
+
+model MonthlyPension {
+  id               String    @id @default(cuid())
+  pensionerId      String
+  pensionDetailId  String?
+  month            Int
+  year             Int
+  basicPension     Decimal   @db.Decimal(12, 2)
+  da               Decimal   @db.Decimal(12, 2)
+  hra              Decimal   @db.Decimal(12, 2)
+  medicalAllowance Decimal   @db.Decimal(12, 2)
+  otherAllowances  Decimal   @db.Decimal(12, 2)
+  grossAmount      Decimal   @db.Decimal(12, 2)
+  deductions       Decimal   @db.Decimal(12, 2)
+  netAmount        Decimal   @db.Decimal(12, 2)
+  status           String    @default("PENDING")
+  paymentDate      DateTime?
+  slipUrl          String?
+  processedById    String?
+  processedAt      DateTime  @default(now())
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  pensioner        Pensioner @relation(fields: [pensionerId], references: [id], onDelete: Cascade)
+  pensionDetail    PensionDetail? @relation(fields: [pensionDetailId], references: [id])
+
+  @@unique([pensionerId, month, year])
+  @@index([month, year, status])
+}
+
+model PensionProcessingLog {
+  id            String    @id @default(cuid())
+  month         Int
+  year          Int
+  totalPensioners Int
+  processedCount Int
+  failedCount   Int
+  status        String    @default("RUNNING")
+  startedAt     DateTime  @default(now())
+  completedAt   DateTime?
+  processedById String?
+  errorMessage  String?
+  createdAt     DateTime  @default(now())
+}
+
+model Policy {
+  id                  String             @id @default(cuid())
+  policyNumber        String             @unique
+  title               String
+  coverageDetails     String?
+  claimGuidelines     String?
+  validFrom           DateTime
+  validTo             DateTime
+  documentUrl         String?
+  consentRequired     Boolean            @default(false)
+  isPublished         Boolean            @default(false)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  pensioners          PensionerPolicy[]
+}
+
+model PensionerPolicy {
+  id             String    @id @default(cuid())
+  pensionerId    String
+  policyId       String
+  acknowledgedAt DateTime?
+  consentGivenAt DateTime?
+  pensioner      Pensioner @relation(fields: [pensionerId], references: [id], onDelete: Cascade)
+  policy         Policy    @relation(fields: [policyId], references: [id], onDelete: Cascade)
+
+  @@unique([pensionerId, policyId])
+}
+
+model JeevanPramaanRecord {
+  id                String               @id @default(cuid())
+  pensionerId       String
+  applicationNumber String?
+  submissionDate    DateTime?
+  verificationDate  DateTime?
+  status            JeevanPramaanStatus  @default(NOT_SUBMITTED)
+  remarks           String?
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  pensioner         Pensioner            @relation(fields: [pensionerId], references: [id], onDelete: Cascade)
+}
+
+model Grievance {
+  id          String          @id @default(cuid())
+  pensionerId String
+  subject     String
+  description String
+  status      GrievanceStatus @default(OPEN)
+  adminReply  String?
+  assignedTo  String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  pensioner   Pensioner       @relation(fields: [pensionerId], references: [id], onDelete: Cascade)
+  attachments GrievanceAttachment[]
+  history     GrievanceHistory[]
+
+  @@index([pensionerId, status])
+}
+
+model GrievanceAttachment {
+  id          String   @id @default(cuid())
+  grievanceId String
+  filename    String
+  url         String
+  contentType String?
+  size        Int?
+  uploadedAt  DateTime @default(now())
+  grievance   Grievance @relation(fields: [grievanceId], references: [id], onDelete: Cascade)
+
+  @@index([grievanceId])
+}
+
+model GrievanceHistory {
+  id          String   @id @default(cuid())
+  grievanceId String
+  action      String
+  fromStatus  GrievanceStatus?
+  toStatus    GrievanceStatus?
+  note        String?
+  performedBy String?
+  performedAt DateTime @default(now())
+  grievance   Grievance @relation(fields: [grievanceId], references: [id], onDelete: Cascade)
+
+  @@index([grievanceId])
+}
+
+model Notification {
+  id          String                 @id @default(cuid())
+  title       String
+  message     String
+  audience    NotificationAudience   @default(ALL)
+  scheduledAt DateTime?
+  publishedAt DateTime?
+  createdById String
+  createdAt   DateTime               @default(now())
+  receipts    NotificationReceipt[]
+}
+
+model NotificationReceipt {
+  id             String        @id @default(cuid())
+  notificationId String
+  pensionerId    String
+  readAt         DateTime?
+  notification   Notification  @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  pensioner      Pensioner     @relation(fields: [pensionerId], references: [id], onDelete: Cascade)
+
+  @@unique([notificationId, pensionerId])
+}
+
+model Lead {
+  id          String    @id @default(cuid())
+  pensionerId String
+  name        String
+  mobile      String
+  product     String?
+  remarks     String?
+  status      String    @default("NEW")
+  createdAt   DateTime  @default(now())
+  pensioner   Pensioner @relation(fields: [pensionerId], references: [id], onDelete: Cascade)
+}
+
+model Admin {
+  id           String      @id @default(cuid())
+  name         String
+  email        String      @unique
+  passwordHash String
+  role         AdminRole   @default(USER_MANAGER)
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  auditLogs    AuditLog[]
+}
+
+model OtpCode {
+  id        String   @id @default(cuid())
+  mobile    String
+  codeHash  String
+  expiresAt DateTime
+  consumedAt DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([mobile, expiresAt])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  adminId    String?
+  action     String
+  entityType String?
+  entityId   String?
+  metadata   Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+  admin      Admin?   @relation(fields: [adminId], references: [id], onDelete: SetNull)
+}
+
+model UserActivity {
+  id          String    @id @default(cuid())
+  pensionerId String
+  action      String
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+  pensioner   Pensioner @relation(fields: [pensionerId], references: [id], onDelete: Cascade)
+}

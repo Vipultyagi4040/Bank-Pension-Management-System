@@ -1,0 +1,22 @@
+{
+  "appId": "com.bankpension.admin",
+  "productName": "Bank Pension Admin",
+  "directories": {
+    "output": "out/desktop"
+  },
+  "files": [
+    "dist/**/*",
+    "electron/dist/**/*",
+    "package.json"
+  ],
+  "asar": false,
+  "win": {
+    "target": "nsis"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "Bank Pensioner",
+    "slug": "bank-pensioner",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "bankpensioner",
+    "plugins": ["expo-router", "expo-secure-store"],
+    "android": {
+      "package": "com.example.bankpensioner"
+    },
+    "ios": {
+      "bundleIdentifier": "com.example.bankpensioner"
+    }
+  }
+}
