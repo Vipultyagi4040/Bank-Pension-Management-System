@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:5174 && electron .\"",
+    "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:5176 && electron .\"",
     "electron:build": "npm run build && electron-builder"
   },
   "dependencies": {

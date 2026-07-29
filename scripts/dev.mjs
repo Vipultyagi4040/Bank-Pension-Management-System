@@ -3,7 +3,8 @@ import { spawn } from "node:child_process";
 const commands = [
   ["API", ["run", "dev:api"]],
   ["ADMIN", ["run", "dev:admin"]],
-  ["PORTAL", ["run", "dev:portal", "--", "--port", "5174"]]
+  ["PORTAL", ["run", "dev:portal", "--", "--port", "5174"]],
+  ["DESKTOP", ["run", "dev:desktop"]]
 ];
 const children = commands.map(([name,args]) => {
   const child=spawn(process.platform === "win32" ? "npm.cmd" : "npm", args, {stdio:"inherit", shell:false});

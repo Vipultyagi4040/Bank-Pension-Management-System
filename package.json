@@ -13,6 +13,7 @@
     "dev:api": "npm --workspace apps/api run dev",
     "dev:admin": "npm --workspace apps/admin run dev",
     "dev:portal": "npm --workspace apps/portal run dev",
+    "dev:desktop": "npm --workspace apps/desktop run electron:dev",
     "build": "npm --workspace apps/api run build && npm --workspace apps/admin run build && npm --workspace apps/portal run build",
     "setup": "npm install && npm --workspace apps/api run prisma:generate"
   }
