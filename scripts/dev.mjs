@@ -7,7 +7,7 @@ const commands = [
   ["DESKTOP", ["run", "dev:desktop"]]
 ];
 const children = commands.map(([name,args]) => {
-  const child=spawn(process.platform === "win32" ? "npm.cmd" : "npm", args, {stdio:"inherit", shell:false});
+  const child=spawn(process.platform === "win32" ? "npm.cmd" : "npm", args, {stdio:"inherit", shell: process.platform === "win32"});
   child.on("exit", code => console.log(`${name} stopped with code ${code}`));
   return child;
 });
