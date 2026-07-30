@@ -1,72 +1,231 @@
 import { FormEvent, useEffect, useState } from "react";
-import { Navigate, Route, Routes, Link } from "react-router-dom";
+import { Navigate, Route, Routes, Link, useLocation } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { LayoutDashboard, User, FileText, Bell, MessageSquare, Users, FileBarChart, LogOut, Menu, X, Shield, Smartphone, Search } from "lucide-react";
 import { api } from "./api";
 
 function Login(){
   const [mobile,setMobile]=useState("9999999999"),[otp,setOtp]=useState(""),[stage,setStage]=useState(false),[dev,setDev]=useState(""),[error,setError]=useState("");
   async function submit(e:FormEvent){e.preventDefault();setError("");try{if(!stage){const r=await api.post("/auth/pensioner/request-otp",{mobile});setDev(r.data.data.developmentOtp||"");setStage(true)}else{const r=await api.post("/auth/pensioner/verify-otp",{mobile,otp});localStorage.setItem("pensionerToken",r.data.data.accessToken);location.href="/"}}catch(e:any){setError(e.response?.data?.message||"Request failed")}}
   return (
-    <form className="login" onSubmit={submit}>
-      <h1>Pensioner Login</h1>
-      <p className="muted">Registered mobile number se secure login karein.</p>
-      {!stage ? (
-        <input className="input" value={mobile} onChange={e=>setMobile(e.target.value)} maxLength={10} />
-      ) : (
-        <>
-          <input className="input" placeholder="OTP" value={otp} onChange={e=>setOtp(e.target.value)} maxLength={6} />
-          {dev && <p>Development OTP: {dev}</p>}
-        </>
-      )}
-      {error && <p className="error">{error}</p>}
-      <button className="btn">{stage ? "Verify OTP" : "Send OTP"}</button>
-    </form>
+    <div className="login-page">
+      <div className="login-card">
+        <div className="login-logo">
+          <div className="login-logo-icon">🏦</div>
+          <h1>Pensioner Portal</h1>
+          <p>Secure login with your registered mobile number</p>
+        </div>
+        <form onSubmit={submit}>
+          <div className="form-group">
+            <label className="form-label">Mobile Number</label>
+            <div style={{ position: "relative" }}>
+              <Smartphone size={18} style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+              <input className="form-input" style={{ paddingLeft: 44 }} value={mobile} onChange={e=>setMobile(e.target.value)} maxLength={10} placeholder="Enter 10-digit mobile number" required />
+            </div>
+          </div>
+          {stage && (
+            <div className="form-group">
+              <label className="form-label">Enter OTP</label>
+              <input className="form-input" placeholder="Enter 6-digit OTP" value={otp} onChange={e=>setOtp(e.target.value)} maxLength={6} required />
+              {dev && <p style={{ color: "var(--primary)", fontSize: "0.85rem", marginTop: 6 }}>Development OTP: <strong>{dev}</strong></p>}
+            </div>
+          )}
+          {error && <div className="form-error">{error}</div>}
+          <button type="submit" className="btn btn-primary" style={{ width: "100%", justifyContent: "center", marginTop: 8 }}>
+            {stage ? "Verify OTP" : "Send OTP"}
+          </button>
+        </form>
+        <p style={{ textAlign: "center", marginTop: 24, fontSize: "0.85rem", color: "var(--text-muted)" }}>
+          Demo: 9999999999 / OTP 123456
+        </p>
+      </div>
+    </div>
   );
 }
 function Register(){
   const [f,setF]=useState({employeeId:"",mobile:"",email:"",address:""}),[msg,setMsg]=useState(""),[error,setError]=useState("");
   async function go(e:FormEvent){e.preventDefault();setError("");setMsg("");try{const r=await api.post("/auth/pensioner/register",f);setMsg(r.data.message);setF({employeeId:"",mobile:"",email:"",address:""})}catch(e:any){setError(e.response?.data?.message||"Registration failed")}}
   return (
-    <form className="login" onSubmit={go}>
-      <h1>Complete Registration</h1>
-      {Object.keys(f).map(k=>(
-        <input className="input" key={k} placeholder={k} value={(f as any)[k]} onChange={e=>setF({...f,[k]:e.target.value})} />
-      ))}
-      <button className="btn">Submit for Approval</button>
-      {msg && <p>{msg}</p>}
-      {error && <p className="error">{error}</p>}
-      <p><Link to="/login">Back to login</Link></p>
-    </form>
+    <div className="login-page">
+      <div className="login-card">
+        <div className="login-logo">
+          <div className="login-logo-icon">🏦</div>
+          <h1>Complete Registration</h1>
+          <p>Submit your details for approval</p>
+        </div>
+        <form onSubmit={go}>
+          {Object.keys(f).map(k=>(
+            <div className="form-group" key={k}>
+              <label className="form-label" style={{ textTransform: "capitalize" }}>{k}</label>
+              <input className="form-input" placeholder={k} value={(f as any)[k]} onChange={e=>setF({...f,[k]:e.target.value})} required />
+            </div>
+          ))}
+          {msg && <div style={{ color: "#16a34a", fontSize: "0.9rem", marginBottom: 12 }}>{msg}</div>}
+          {error && <div className="form-error">{error}</div>}
+          <button type="submit" className="btn btn-primary" style={{ width: "100%", justifyContent: "center", marginTop: 8 }}>Submit for Approval</button>
+          <p style={{ textAlign: "center", marginTop: 16, fontSize: "0.9rem" }}>
+            <Link to="/login" style={{ color: "var(--primary)" }}>Back to login</Link>
+          </p>
+        </form>
+      </div>
+    </div>
   );
 }
-function Layout({children}:{children:any}){return <div className="shell"><div className="header"><div><h2>Bank Pensioner Portal</h2><span className="muted">Pension services at one place</span></div><button className="btn" onClick={()=>{localStorage.removeItem("pensionerToken");location.href="/login"}}>Logout</button></div><div className="tabs"><Link to="/">Dashboard</Link><Link to="/profile">Profile</Link><Link to="/pension">Pension</Link><Link to="/slips">Slips</Link><Link to="/policies">Policies</Link><Link to="/notifications">Notifications</Link><Link to="/grievances">Grievances</Link><Link to="/leads">Lead</Link><Link to="/jeevan">Jeevan Pramaan</Link></div>{children}</div>}
+
+const navItems = [
+  { to: "/", icon: LayoutDashboard, label: "Dashboard" },
+  { to: "/profile", icon: User, label: "Profile" },
+  { to: "/pension", icon: FileText, label: "Pension" },
+  { to: "/slips", icon: FileBarChart, label: "Slips" },
+  { to: "/policies", icon: Shield, label: "Policies" },
+  { to: "/notifications", icon: Bell, label: "Notifications" },
+  { to: "/grievances", icon: MessageSquare, label: "Grievances" },
+  { to: "/leads", icon: Users, label: "Lead" },
+  { to: "/jeevan", icon: FileText, label: "Jeevan Pramaan" }
+];
+
+function Layout({ children }: { children: any }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const location = useLocation();
+
+  const getPageTitle = () => {
+    const item = navItems.find(item => location.pathname === item.to || (item.to !== "/" && location.pathname.startsWith(item.to)));
+    return item?.label || "Dashboard";
+  };
+
+  return (
+    <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <nav className="top-nav">
+        <div className="nav-inner">
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <button
+              className="nav-icon-btn"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              style={{ display: "none", background: "none", color: "white", border: "none" }}
+            >
+              {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+            <Link to="/" className="nav-brand">
+              <span className="nav-brand-icon">🏦</span>
+              Pension Portal
+            </Link>
+          </div>
+          <div className="nav-links">
+            {navItems.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={location.pathname === item.to || (item.to !== "/" && location.pathname.startsWith(item.to)) ? "active" : ""}
+              >
+                <item.icon size={18} style={{ marginRight: 6, verticalAlign: "middle" }} />
+                {item.label}
+              </Link>
+            ))}
+          </div>
+          <div className="nav-user">
+            <button
+              className="nav-links"
+              onClick={() => { localStorage.removeItem("pensionerToken"); window.location.href = "/login"; }}
+              style={{ background: "rgba(255,255,255,0.15)", borderRadius: "var(--radius)", padding: "8px 14px" }}
+            >
+              <LogOut size={18} style={{ marginRight: 6, verticalAlign: "middle" }} />
+              Logout
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      <main className="shell" style={{ paddingTop: 24 }}>
+        <div className="page-header" style={{ marginBottom: 24 }}>
+          <div>
+            <h1 className="page-title">{getPageTitle()}</h1>
+          </div>
+        </div>
+        {children}
+      </main>
+    </div>
+  );
+}
 function Dash(){
   const { data, isLoading, error } = useQuery({
     queryKey: ["dashboard"],
     queryFn: async () => (await api.get("/pensioner/dashboard")).data.data
   });
 
-  if (isLoading) return <Layout><p>Loading...</p></Layout>;
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="cards">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="card">
+              <div className="skeleton skeleton-text" style={{ width: "40%", height: 14 }} />
+              <div className="skeleton skeleton-text" style={{ width: "70%", height: 32, marginTop: 12 }} />
+            </div>
+          ))}
+        </div>
+      </Layout>
+    );
+  }
   if (error) return <Layout><p className="error">Failed to load dashboard</p></Layout>;
 
   const p = data?.profile?.pensionDetails?.[0];
 
   return (
     <Layout>
-      <h1>Welcome, {data?.profile?.name}</h1>
-      <div className="cards">
-        <div className="card">
-          <span className="muted">Current Pension</span>
-          <div className="amount">₹{p?.pensionAmount ?? "-"}</div>
-          <p>PPO: {p?.ppoNumber || "-"}</p>
+      <div className="animate-fade-in">
+        <div className="cards">
+          <div className="card">
+            <div className="card-header">
+              <span className="card-title">Current Pension</span>
+              <div className="card-icon"><FileText size={24} /></div>
+            </div>
+            <div className="card-value">₹{p?.pensionAmount ?? "-"}</div>
+            <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>PPO: {p?.ppoNumber || "-"}</p>
+          </div>
+          <div className="card">
+            <div className="card-header">
+              <span className="card-title">Open Grievances</span>
+              <div className="card-icon"><MessageSquare size={24} /></div>
+            </div>
+            <div className="card-value">{data?.counters?.openGrievances ?? 0}</div>
+          </div>
+          <div className="card">
+            <div className="card-header">
+              <span className="card-title">Unread Notifications</span>
+              <div className="card-icon"><Bell size={24} /></div>
+            </div>
+            <div className="card-value">{data?.counters?.unreadNotifications ?? 0}</div>
+          </div>
         </div>
-        <div className="card">
-          <span>Open Grievances</span>
-          <div className="amount">{data?.counters?.openGrievances ?? 0}</div>
-        </div>
-        <div className="card">
-          <span>Unread Notifications</span>
-          <div className="amount">{data?.counters?.unreadNotifications ?? 0}</div>
+
+        <div className="card" style={{ marginTop: 24 }}>
+          <h3 style={{ marginTop: 0, marginBottom: 16 }}>Personal Information</h3>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
+            <div>
+              <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5 }}>Name</span>
+              <p style={{ fontWeight: 600 }}>{data?.profile?.name || "-"}</p>
+            </div>
+            <div>
+              <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5 }}>Employee ID</span>
+              <p style={{ fontWeight: 600 }}>{data?.profile?.employeeId || "-"}</p>
+            </div>
+            <div>
+              <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5 }}>Mobile</span>
+              <p style={{ fontWeight: 600 }}>{data?.profile?.mobile || "-"}</p>
+            </div>
+            <div>
+              <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5 }}>Department</span>
+              <p style={{ fontWeight: 600 }}>{data?.profile?.department || "-"}</p>
+            </div>
+            <div>
+              <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5 }}>Designation</span>
+              <p style={{ fontWeight: 600 }}>{data?.profile?.designation || "-"}</p>
+            </div>
+            <div>
+              <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5 }}>Status</span>
+              <p><span className="badge badge-success">{data?.profile?.status || "-"}</span></p>
+            </div>
+          </div>
         </div>
       </div>
     </Layout>
@@ -105,92 +264,173 @@ function Profile(){
     updateMutation.mutate(form);
   }
 
-  if (isLoading) return <Layout><p>Loading...</p></Layout>;
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="cards">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="card">
+              <div className="skeleton skeleton-text" style={{ width: "40%", height: 14 }} />
+              <div className="skeleton skeleton-text" style={{ width: "70%", height: 32, marginTop: 12 }} />
+            </div>
+          ))}
+        </div>
+      </Layout>
+    );
+  }
   if (error) return <Layout><p className="error">Failed to load profile</p></Layout>;
 
   const p = data?.pensionDetails?.[0];
 
   return (
     <Layout>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h1>My Profile</h1>
-        {!editing && <button className="secondary" onClick={() => setEditing(true)}>Edit Profile</button>}
-      </div>
-      {msg && <p style={{ color: "#16a34a", marginBottom: 12 }}>{msg}</p>}
+      <div className="animate-fade-in">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+          <h1 className="page-title">My Profile</h1>
+          {!editing && (
+            <button className="btn btn-primary" onClick={() => setEditing(true)}>
+              <User size={18} />
+              Edit Profile
+            </button>
+          )}
+        </div>
+        {msg && <div className="card" style={{ marginBottom: 20, background: "#c6f6d5", border: "1px solid #9ae6b4", color: "#22543d" }}>{msg}</div>}
 
-      {editing ? (
-        <form className="card" onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Email</label>
-            <input className="input" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
-          </div>
-          <div className="form-group">
-            <label>Address</label>
-            <textarea className="input" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} rows={3} />
-          </div>
-          <div style={{ display: "flex", gap: 12 }}>
-            <button type="submit" disabled={updateMutation.isPending}>{updateMutation.isPending ? "Saving..." : "Save Changes"}</button>
-            <button type="button" className="secondary" onClick={() => setEditing(false)}>Cancel</button>
-          </div>
-        </form>
-      ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))", gap: 16 }}>
+        {editing ? (
           <div className="card">
-            <h3 style={{ marginTop: 0 }}>Personal Information</h3>
-            <p><b>Employee ID:</b> {data.employeeId}</p>
-            <p><b>Name:</b> {data.name}</p>
-            <p><b>Mobile:</b> {data.mobile}</p>
-            <p><b>Email:</b> {data.email || "-"}</p>
-            <p><b>Gender:</b> {data.gender || "-"}</p>
-            <p><b>Date of Birth:</b> {data.dateOfBirth ? new Date(data.dateOfBirth).toLocaleDateString() : "-"}</p>
-            <p><b>Marital Status:</b> {data.maritalStatus || "-"}</p>
-            <p><b>Father / Spouse Name:</b> {data.fatherName || "-"}</p>
-            <p><b>PAN Number:</b> {data.panNumber || "-"}</p>
-            <p><b>Aadhaar Number:</b> {data.aadhaarNumber ? "XXXX-XXXX-" + data.aadhaarNumber.slice(-4) : "-"}</p>
-            <p><b>Blood Group:</b> {data.bloodGroup || "-"}</p>
-            <p><b>Emergency Contact:</b> {data.emergencyContactName ? `${data.emergencyContactName} (${data.emergencyContactMobile})` : "-"}</p>
-            <p><b>Address:</b> {data.address || "-"}</p>
-            <p><b>Status:</b> {data.status}</p>
+            <h3 style={{ marginTop: 0, marginBottom: 20 }}>Edit Profile</h3>
+            <form onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label className="form-label">Email</label>
+                <input className="form-input" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Address</label>
+                <textarea className="form-textarea" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} rows={3} />
+              </div>
+              <div style={{ display: "flex", gap: 12 }}>
+                <button type="submit" className="btn btn-primary" disabled={updateMutation.isPending}>
+                  {updateMutation.isPending ? "Saving..." : "Save Changes"}
+                </button>
+                <button type="button" className="btn btn-secondary" onClick={() => setEditing(false)}>Cancel</button>
+              </div>
+            </form>
           </div>
-          <div className="card">
-            <h3 style={{ marginTop: 0 }}>Employment Information</h3>
-            <p><b>Department:</b> {data.department || "-"}</p>
-            <p><b>Designation:</b> {data.designation || "-"}</p>
-            <p><b>Date of Joining:</b> {data.dateOfJoining ? new Date(data.dateOfJoining).toLocaleDateString() : "-"}</p>
-            <p><b>Date of Retirement:</b> {data.dateOfRetirement ? new Date(data.dateOfRetirement).toLocaleDateString() : "-"}</p>
-            <p><b>Pension Type:</b> {data.pensionType || "-"}</p>
-          </div>
-          <div className="card">
-            <h3 style={{ marginTop: 0 }}>Bank Details</h3>
-            <p><b>Account Holder:</b> {data.bankAccountHolderName || "-"}</p>
-            <p><b>Account Number:</b> {data.bankAccountNumber || "-"}</p>
-            <p><b>IFSC Code:</b> {data.bankIfscCode || "-"}</p>
-            <p><b>Account Type:</b> {data.bankAccountType || "-"}</p>
-            <p><b>Branch Name:</b> {data.bankBranchName || "-"}</p>
-            <p><b>Branch Address:</b> {data.bankBranchAddress || "-"}</p>
-          </div>
-          <div className="card">
-            <h3 style={{ marginTop: 0 }}>Nominee Details</h3>
-            <p><b>Nominee Name:</b> {data.nomineeName || "-"}</p>
-            <p><b>Relation:</b> {data.nomineeRelation || "-"}</p>
-            <p><b>Share:</b> {data.nomineeShare || "-"}</p>
-          </div>
-          <div className="card">
-            <h3 style={{ marginTop: 0 }}>Current Pension</h3>
-            {p ? (
-              <>
-                <p><b>PPO Number:</b> {p.ppoNumber}</p>
-                <p><b>Category:</b> {p.category || "-"}</p>
-                <p><b>Pension Amount:</b> ₹{p.pensionAmount}</p>
-                <p><b>Effective From:</b> {new Date(p.effectiveFrom).toLocaleDateString()}</p>
-                <p><b>Bank Name:</b> {p.bankName || "-"}</p>
-              </>
-            ) : (
-              <p>No pension record available.</p>
+        ) : (
+          <div className="grid">
+            <div className="card">
+              <div className="card-header">
+                <span className="card-title">Personal Information</span>
+                <div className="card-icon"><User size={24} /></div>
+              </div>
+              <div style={{ display: "grid", gap: 12 }}>
+                {[
+                  ["Employee ID", data.employeeId],
+                  ["Name", data.name],
+                  ["Mobile", data.mobile],
+                  ["Email", data.email || "-"],
+                  ["Gender", data.gender || "-"],
+                  ["Date of Birth", data.dateOfBirth ? new Date(data.dateOfBirth).toLocaleDateString() : "-"],
+                  ["Marital Status", data.maritalStatus || "-"],
+                  ["Father / Spouse", data.fatherName || "-"],
+                  ["PAN", data.panNumber || "-"],
+                  ["Aadhaar", data.aadhaarNumber ? "XXXX-XXXX-" + data.aadhaarNumber.slice(-4) : "-"],
+                  ["Blood Group", data.bloodGroup || "-"],
+                  ["Emergency Contact", data.emergencyContactName ? `${data.emergencyContactName} (${data.emergencyContactMobile})` : "-"],
+                  ["Address", data.address || "-"],
+                  ["Status", <span key="status" className="badge badge-success">{data.status}</span>]
+                ].map(([label, value]) => (
+                  <div key={label as string} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid var(--border-light)" }}>
+                    <span style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>{label as string}</span>
+                    <span style={{ fontWeight: 500, textAlign: "right", maxWidth: "60%" }}>{value as any}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="card">
+              <div className="card-header">
+                <span className="card-title">Employment Information</span>
+                <div className="card-icon"><Users size={24} /></div>
+              </div>
+              <div style={{ display: "grid", gap: 12 }}>
+                {[
+                  ["Department", data.department || "-"],
+                  ["Designation", data.designation || "-"],
+                  ["Date of Joining", data.dateOfJoining ? new Date(data.dateOfJoining).toLocaleDateString() : "-"],
+                  ["Date of Retirement", data.dateOfRetirement ? new Date(data.dateOfRetirement).toLocaleDateString() : "-"],
+                  ["Pension Type", data.pensionType || "-"]
+                ].map(([label, value]) => (
+                  <div key={label as string} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid var(--border-light)" }}>
+                    <span style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>{label as string}</span>
+                    <span style={{ fontWeight: 500 }}>{value as any}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="card">
+              <div className="card-header">
+                <span className="card-title">Bank Details</span>
+                <div className="card-icon"><FileText size={24} /></div>
+              </div>
+              <div style={{ display: "grid", gap: 12 }}>
+                {[
+                  ["Account Holder", data.bankAccountHolderName || "-"],
+                  ["Account Number", data.bankAccountNumber || "-"],
+                  ["IFSC Code", data.bankIfscCode || "-"],
+                  ["Account Type", data.bankAccountType || "-"],
+                  ["Branch Name", data.bankBranchName || "-"],
+                  ["Branch Address", data.bankBranchAddress || "-"]
+                ].map(([label, value]) => (
+                  <div key={label as string} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid var(--border-light)" }}>
+                    <span style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>{label as string}</span>
+                    <span style={{ fontWeight: 500, textAlign: "right" }}>{value as any}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="card">
+              <div className="card-header">
+                <span className="card-title">Nominee Details</span>
+                <div className="card-icon"><User size={24} /></div>
+              </div>
+              <div style={{ display: "grid", gap: 12 }}>
+                {[
+                  ["Nominee Name", data.nomineeName || "-"],
+                  ["Relation", data.nomineeRelation || "-"],
+                  ["Share", data.nomineeShare || "-"]
+                ].map(([label, value]) => (
+                  <div key={label as string} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid var(--border-light)" }}>
+                    <span style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>{label as string}</span>
+                    <span style={{ fontWeight: 500 }}>{value as any}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {p && (
+              <div className="card" style={{ gridColumn: "1 / -1" }}>
+                <div className="card-header">
+                  <span className="card-title">Current Pension</span>
+                  <div className="card-icon"><FileBarChart size={24} /></div>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
+                  {[
+                    ["PPO Number", p.ppoNumber],
+                    ["Category", p.category || "-"],
+                    ["Pension Amount", `₹${p.pensionAmount}`],
+                    ["Effective From", new Date(p.effectiveFrom).toLocaleDateString()],
+                    ["Bank Name", p.bankName || "-"]
+                  ].map(([label, value]) => (
+                    <div key={label as string}>
+                      <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5 }}>{label as string}</span>
+                      <p style={{ fontWeight: 600, fontSize: "1.1rem", marginTop: 4 }}>{value as any}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </Layout>
   );
 }
@@ -200,31 +440,56 @@ function PensionHistory(){
     queryFn: async () => (await api.get("/pensioner/pension")).data.data
   });
 
-  if (isLoading) return <Layout><p>Loading...</p></Layout>;
+  if (isLoading) return <Layout><div className="skeleton" style={{ height: 200 }} /></Layout>;
   if (error) return <Layout><p className="error">Failed to load pension history</p></Layout>;
-  if (!data?.length) return <Layout><p>No pension history available.</p></Layout>;
+  if (!data?.length) return <Layout><div className="empty-state"><FileText size={48} /><h3>No pension history</h3><p>Your pension history will appear here.</p></div></Layout>;
 
   return (
     <Layout>
-      <h1>Pension History</h1>
-      <div className="cards">
-        {data.map((item: any) => (
-          <div className="card" key={item.id}>
-            <h3>PPO: {item.ppoNumber}</h3>
-            <p><b>Type:</b> {item.pensionType || "-"}</p>
-            <p><b>Category:</b> {item.category || "-"}</p>
-            <p><b>Basic Pension:</b> ₹{item.basicPension}</p>
-            <p><b>DA:</b> ₹{item.da}</p>
-            <p><b>HRA:</b> ₹{item.hra}</p>
-            <p><b>Medical Allowance:</b> ₹{item.medicalAllowance}</p>
-            <p><b>Other Allowances:</b> ₹{item.otherAllowances}</p>
-            <p><b>Deductions:</b> ₹{item.deductions}</p>
-            <p><b>Pension Amount:</b> ₹{item.pensionAmount}</p>
-            <p><b>Effective From:</b> {item.effectiveFrom ? new Date(item.effectiveFrom).toLocaleDateString() : "-"}</p>
-            <p><b>Effective To:</b> {item.effectiveTo ? new Date(item.effectiveTo).toLocaleDateString() : "-"}</p>
-            <p><b>Status:</b> {item.status}</p>
+      <div className="animate-fade-in">
+        <h1 className="page-title" style={{ marginBottom: 20 }}>Pension History</h1>
+        <div className="table-container">
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>PPO Number</th>
+                  <th>Type</th>
+                  <th>Category</th>
+                  <th>Basic Pension</th>
+                  <th>DA</th>
+                  <th>HRA</th>
+                  <th>Medical</th>
+                  <th>Other</th>
+                  <th>Deductions</th>
+                  <th>Net Amount</th>
+                  <th>From</th>
+                  <th>To</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.map((item: any) => (
+                  <tr key={item.id}>
+                    <td style={{ fontWeight: 600, color: "var(--primary)" }}>{item.ppoNumber}</td>
+                    <td>{item.pensionType || "-"}</td>
+                    <td>{item.category || "-"}</td>
+                    <td>₹{item.basicPension}</td>
+                    <td>₹{item.da}</td>
+                    <td>₹{item.hra}</td>
+                    <td>₹{item.medicalAllowance}</td>
+                    <td>₹{item.otherAllowances}</td>
+                    <td style={{ color: "#e53e3e" }}>₹{item.deductions}</td>
+                    <td style={{ fontWeight: 700, color: "#22543d" }}>₹{item.pensionAmount}</td>
+                    <td>{item.effectiveFrom ? new Date(item.effectiveFrom).toLocaleDateString() : "-"}</td>
+                    <td>{item.effectiveTo ? new Date(item.effectiveTo).toLocaleDateString() : "-"}</td>
+                    <td><span className="badge badge-success">{item.status}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        ))}
+        </div>
       </div>
     </Layout>
   );
@@ -253,40 +518,48 @@ function PensionSlips(){
     }
   };
 
-  if (isLoading) return <Layout><p>Loading...</p></Layout>;
+  if (isLoading) return <Layout><div className="skeleton" style={{ height: 200 }} /></Layout>;
   if (error) return <Layout><p className="error">Failed to load slips</p></Layout>;
-  if (!data?.length) return <Layout><p>No pension slips available.</p></Layout>;
+  if (!data?.length) return <Layout><div className="empty-state"><FileBarChart size={48} /><h3>No pension slips</h3><p>Your pension slips will appear here once generated.</p></div></Layout>;
 
   return (
     <Layout>
-      <h1>Pension Slips</h1>
-      <div className="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Month</th>
-              <th>Year</th>
-              <th>Gross</th>
-              <th>Deductions</th>
-              <th>Net</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((item: any) => (
-              <tr key={item.id}>
-                <td>{item.month}</td>
-                <td>{item.year}</td>
-                <td>₹{item.grossAmount}</td>
-                <td>₹{item.deductions}</td>
-                <td>₹{item.netAmount}</td>
-                <td>{item.status || "Pending"}</td>
-                <td><button className="secondary" onClick={() => download(item.id)}>Download PDF</button></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="animate-fade-in">
+        <h1 className="page-title" style={{ marginBottom: 20 }}>Pension Slips</h1>
+        <div className="table-container">
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Month</th>
+                  <th>Year</th>
+                  <th>Gross Amount</th>
+                  <th>Deductions</th>
+                  <th>Net Amount</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.map((item: any) => (
+                  <tr key={item.id}>
+                    <td style={{ fontWeight: 600 }}>{item.month}</td>
+                    <td>{item.year}</td>
+                    <td>₹{item.grossAmount}</td>
+                    <td style={{ color: "#e53e3e" }}>₹{item.deductions}</td>
+                    <td style={{ fontWeight: 700, color: "#22543d" }}>₹{item.netAmount}</td>
+                    <td><span className="badge badge-success">{item.status || "Pending"}</span></td>
+                    <td>
+                      <button className="btn btn-primary btn-sm" onClick={() => download(item.id)}>
+                        Download PDF
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </Layout>
   );
@@ -303,27 +576,52 @@ function Policies(){
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["policies"] })
   });
 
-  if (isLoading) return <Layout><p>Loading...</p></Layout>;
+  if (isLoading) return <Layout><div className="skeleton" style={{ height: 200 }} /></Layout>;
   if (error) return <Layout><p className="error">Failed to load policies</p></Layout>;
+  if (!data?.length) return <Layout><div className="empty-state"><Shield size={48} /><h3>No policies</h3><p>You will see available policies here.</p></div></Layout>;
 
   return (
     <Layout>
-      <h1>Policies</h1>
-      <div className="cards">
-        {data?.map((item: any) => (
-          <div className="card" key={item.id}>
-            <h3>{item.policy?.title || "Policy"}</h3>
-            <p><b>Policy Number:</b> {item.policy?.policyNumber || "-"}</p>
-            <p><b>Coverage:</b> {item.policy?.coverageDetails || "No details available"}</p>
-            <p><b>Valid From:</b> {item.policy?.validFrom ? new Date(item.policy.validFrom).toLocaleDateString() : "-"}</p>
-            <p><b>Valid To:</b> {item.policy?.validTo ? new Date(item.policy.validTo).toLocaleDateString() : "-"}</p>
-            {item.acknowledgedAt ? (
-              <p style={{ color: "#16a34a" }}>Acknowledged on {new Date(item.acknowledgedAt).toLocaleDateString()}</p>
-            ) : (
-              <button onClick={() => acknowledge.mutate(item.id)}>Acknowledge & Consent</button>
-            )}
-          </div>
-        ))}
+      <div className="animate-fade-in">
+        <h1 className="page-title" style={{ marginBottom: 20 }}>Policies</h1>
+        <div className="grid">
+          {data?.map((item: any) => (
+            <div key={item.id} className="card">
+              <div className="card-header">
+                <span className="card-title">Policy</span>
+                <div className="card-icon"><Shield size={24} /></div>
+              </div>
+              <h3 style={{ marginTop: 0, marginBottom: 12 }}>{item.policy?.title || "Policy"}</h3>
+              <div style={{ display: "grid", gap: 10, marginBottom: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>Policy Number</span>
+                  <span style={{ fontWeight: 500 }}>{item.policy?.policyNumber || "-"}</span>
+                </div>
+                <div>
+                  <span style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>Coverage</span>
+                  <p style={{ marginTop: 4, fontSize: "0.9rem" }}>{item.policy?.coverageDetails || "No details available"}</p>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>Valid From</span>
+                  <span style={{ fontWeight: 500 }}>{item.policy?.validFrom ? new Date(item.policy.validFrom).toLocaleDateString() : "-"}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>Valid To</span>
+                  <span style={{ fontWeight: 500 }}>{item.policy?.validTo ? new Date(item.policy.validTo).toLocaleDateString() : "-"}</span>
+                </div>
+              </div>
+              {item.acknowledgedAt ? (
+                <div style={{ background: "#c6f6d5", padding: 12, borderRadius: "var(--radius)", color: "#22543d", fontSize: "0.9rem", fontWeight: 500 }}>
+                  Acknowledged on {new Date(item.acknowledgedAt).toLocaleDateString()}
+                </div>
+              ) : (
+                <button className="btn btn-primary" style={{ width: "100%", justifyContent: "center" }} onClick={() => acknowledge.mutate(item.id)}>
+                  Acknowledge & Consent
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
     </Layout>
   );
@@ -346,31 +644,69 @@ function Notifications(){
     queryClient.invalidateQueries({ queryKey: ["notifications"] });
   };
 
-  if (isLoading) return <Layout><p>Loading...</p></Layout>;
+  if (isLoading) return <Layout><div className="skeleton" style={{ height: 200 }} /></Layout>;
   if (error) return <Layout><p className="error">Failed to load notifications</p></Layout>;
+  if (!data?.items?.length) return <Layout><div className="empty-state"><Bell size={48} /><h3>No notifications</h3><p>You're all caught up!</p></div></Layout>;
 
   return (
     <Layout>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h1>Notifications</h1>
-        <button className="secondary" onClick={markAllRead}>Mark All Read</button>
-      </div>
-      <div className="toolbar">
-        <select value={filter} onChange={e => setFilter(e.target.value)}>
-          <option value="">All</option>
-          <option value="false">Unread</option>
-          <option value="true">Read</option>
-        </select>
-      </div>
-      <div className="cards">
-        {data?.items?.map((item: any) => (
-          <div className="card" key={item.id} style={{ opacity: item.readAt ? 0.7 : 1 }}>
-            <h3>{item.notification?.title}</h3>
-            <p>{item.notification?.message}</p>
-            <p style={{ fontSize: 12, color: "#667085" }}>{item.notification?.createdAt ? new Date(item.notification.createdAt).toLocaleString() : ""}</p>
-            {!item.readAt && <button onClick={() => markRead(item.id)}>Mark as Read</button>}
+      <div className="animate-fade-in">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+          <h1 className="page-title">Notifications</h1>
+          <button className="btn btn-secondary" onClick={markAllRead}>
+            <Bell size={18} />
+            Mark All Read
+          </button>
+        </div>
+        <div className="table-container">
+          <div className="table-toolbar">
+            <div className="table-search">
+              <Search />
+              <input type="text" placeholder="Search notifications..." />
+            </div>
+            <div className="table-filters">
+              <select value={filter} onChange={e => setFilter(e.target.value)}>
+                <option value="">All</option>
+                <option value="false">Unread</option>
+                <option value="true">Read</option>
+              </select>
+            </div>
           </div>
-        ))}
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Message</th>
+                  <th>Date</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data?.items?.map((item: any) => (
+                  <tr key={item.id} style={{ opacity: item.readAt ? 0.7 : 1 }}>
+                    <td style={{ fontWeight: 600 }}>{item.notification?.title}</td>
+                    <td style={{ maxWidth: 400 }}>{item.notification?.message}</td>
+                    <td style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>{item.notification?.createdAt ? new Date(item.notification.createdAt).toLocaleString() : "-"}</td>
+                    <td>
+                      <span className={`badge ${item.readAt ? "badge-success" : "badge-warning"}`}>
+                        {item.readAt ? "Read" : "Unread"}
+                      </span>
+                    </td>
+                    <td>
+                      {!item.readAt && (
+                        <button className="btn btn-primary btn-sm" onClick={() => markRead(item.id)}>
+                          Mark as Read
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </Layout>
   );

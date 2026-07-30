@@ -1,9 +1,29 @@
+import { useState } from "react";
+import {
+  Bell,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Search,
+  User,
+  Users,
+  FileText,
+  MessageSquare,
+  Shield,
+  BarChart3,
+  Upload,
+  Settings,
+  Clock,
+  FileBarChart,
+  ScrollText
+} from "lucide-react";
 import {
   Navigate,
   NavLink,
   Outlet,
   Route,
   Routes,
+  useLocation
 } from "react-router-dom";
 
 import LoginPage from "./pages/LoginPage";
@@ -24,48 +44,102 @@ import MonthlyPensionsPage from "./pages/MonthlyPensionsPage";
 import PensionReportPage from "./pages/PensionReportPage";
 import AuditLogsPage from "./pages/AuditLogsPage";
 
-function ProtectedLayout() {
-  const token = localStorage.getItem("adminToken");
+const navItems = [
+  { to: "/", icon: LayoutDashboard, label: "Dashboard" },
+  { to: "/pensioners", icon: Users, label: "Pensioners" },
+  { to: "/grievances", icon: MessageSquare, label: "Grievances" },
+  { to: "/notifications", icon: Bell, label: "Notifications" },
+  { to: "/policies", icon: Shield, label: "Policies" },
+  { to: "/jeevan-pramaan", icon: FileText, label: "Jeevan Pramaan" },
+  { to: "/reports", icon: BarChart3, label: "Reports" },
+  { to: "/import", icon: Upload, label: "Bulk Upload" },
+  { to: "/pension-details", icon: Settings, label: "Pension Details" },
+  { to: "/processing", icon: Clock, label: "Monthly Processing" },
+  { to: "/monthly-pensions", icon: FileBarChart, label: "Monthly Pensions" },
+  { to: "/pension-report", icon: ScrollText, label: "Pension Report" },
+  { to: "/audit-logs", icon: ScrollText, label: "Audit Logs" }
+];
 
-  if (!token) {
-    return <Navigate to="/login" replace />;
-  }
+function ProtectedLayout() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const location = useLocation();
+
+  const getPageTitle = () => {
+    const item = navItems.find(item => location.pathname === item.to || (item.to !== "/" && location.pathname.startsWith(item.to)));
+    return item?.label || "Dashboard";
+  };
 
   return (
-    <div className="layout">
-      <aside className="sidebar">
-        <h2>Pension Admin</h2>
-
-        <NavLink to="/">Dashboard</NavLink>
-        <NavLink to="/pensioners">Pensioners</NavLink>
-        <NavLink to="/grievances">Grievances</NavLink>
-        <NavLink to="/notifications">Notifications</NavLink>
-        <NavLink to="/policies">Policies</NavLink>
-        <NavLink to="/jeevan-pramaan">Jeevan Pramaan</NavLink>
-        <NavLink to="/reports">Reports</NavLink>
-        <NavLink to="/import">Bulk Upload</NavLink>
-        <NavLink to="/pension-details">Pension Details</NavLink>
-        <NavLink to="/processing">Monthly Processing</NavLink>
-        <NavLink to="/monthly-pensions">Monthly Pensions</NavLink>
-        <NavLink to="/pension-report">Pension Report</NavLink>
-        <NavLink to="/audit-logs">Audit Logs</NavLink>
-
-        <button
-          className="secondary"
-          style={{ marginTop: 20, width: "100%" }}
-          onClick={() => {
-            localStorage.removeItem("adminToken");
-            window.location.href = "/login";
-          }}
-        >
-          Logout
-        </button>
+    <>
+      <aside className={`sidebar ${sidebarOpen ? "open" : ""}`}>
+        <div className="sidebar-header">
+          <h2>
+            <span className="logo-icon">🏦</span>
+            Pension Admin
+          </h2>
+        </div>
+        <nav className="sidebar-nav">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.to === "/"}
+              onClick={() => setSidebarOpen(false)}
+            >
+              <item.icon size={20} />
+              {item.label}
+            </NavLink>
+          ))}
+          <button
+            className="secondary"
+            style={{ marginTop: 20 }}
+            onClick={() => {
+              localStorage.removeItem("adminToken");
+              window.location.href = "/login";
+            }}
+          >
+            <LogOut size={20} />
+            Logout
+          </button>
+        </nav>
       </aside>
 
-      <main className="content">
-        <Outlet />
-      </main>
-    </div>
+      <div className="main-content">
+        <header className="top-navbar">
+          <div className="navbar-left">
+            <button
+              className="nav-icon-btn"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              style={{ display: "none" }}
+            >
+              <Menu size={20} />
+            </button>
+            <h1>{getPageTitle()}</h1>
+          </div>
+          <div className="navbar-right">
+            <div className="search-box">
+              <Search />
+              <input type="text" placeholder="Search..." />
+            </div>
+            <button className="nav-icon-btn">
+              <Bell size={20} />
+              <span className="badge"></span>
+            </button>
+            <button className="profile-btn">
+              <div className="profile-avatar">A</div>
+              <div className="profile-info">
+                <span className="profile-name">Admin</span>
+                <span className="profile-role">Super Admin</span>
+              </div>
+            </button>
+          </div>
+        </header>
+
+        <main className="content">
+          <Outlet />
+        </main>
+      </div>
+    </>
   );
 }
 
