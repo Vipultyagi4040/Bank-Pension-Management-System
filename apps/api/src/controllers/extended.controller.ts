@@ -32,14 +32,14 @@ export async function registerPensioner(req: Request, res: Response) {
 export async function pensionerDetail(req: Request, res: Response) {
   const id = z.string().parse(req.params.id);
   const data = await prisma.pensioner.findUnique({
-    where: { id },
+    where: { id, deletedAt: null },
     include: {
       pensionDetails: { orderBy: { effectiveFrom: "desc" } },
-      pensionSlips: { orderBy: [{ year: "desc" }, { month: "desc" }] },
-      policies: { include: { policy: true } },
-      grievances: { orderBy: { createdAt: "desc" } },
-      jeevanPramaan: { orderBy: { createdAt: "desc" } },
-      leads: { orderBy: { createdAt: "desc" } }
+      pensionSlips: { orderBy: [{ year: "desc" }, { month: "desc" }], take: 10 },
+      policies: { include: { policy: true }, take: 10 },
+      grievances: { orderBy: { createdAt: "desc" }, take: 10 },
+      jeevanPramaan: { orderBy: { createdAt: "desc" }, take: 5 },
+      leads: { orderBy: { createdAt: "desc" }, take: 10 }
     }
   });
   if (!data) throw new HttpError(404, "Pensioner not found");

@@ -75,15 +75,15 @@ model Pensioner {
   address                String?
   profilePhotoUrl        String?
   idCardUrl              String?
-  status                 UserStatus           @default(PENDING)
-  registrationCompleted Boolean              @default(false)
-  approvedAt             DateTime?
-  approvedById           String?
-  deletedAt              DateTime?
-  createdBy              String?
-  updatedBy              String?
-  createdAt              DateTime             @default(now())
-  updatedAt              DateTime             @updatedAt
+   status                 UserStatus           @default(PENDING)
+   registrationCompleted Boolean              @default(false)
+   approvedAt             DateTime?
+   approvedById           String?
+   deletedAt              DateTime?
+   createdBy              String?
+   updatedBy              String?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
   pensionDetails         PensionDetail[]
   monthlyPensions        MonthlyPension[]
   pensionSlips           PensionSlip[]
@@ -125,7 +125,10 @@ model PensionDetail {
   pensioner        Pensioner   @relation(fields: [pensionerId], references: [id], onDelete: Cascade)
   monthlyPensions  MonthlyPension[]
 
+  @@index([pensionerId, isCurrent])
+  @@index([ppoNumber])
   @@index([pensionerId, effectiveFrom])
+  @@index([createdAt])
 }
 
 model PensionSlip {
@@ -146,6 +149,8 @@ model PensionSlip {
   pensioner   Pensioner @relation(fields: [pensionerId], references: [id], onDelete: Cascade)
 
   @@unique([pensionerId, month, year])
+  @@index([year, month])
+  @@index([pensionerId, year, month])
 }
 
 model MonthlyPension {
@@ -174,6 +179,7 @@ model MonthlyPension {
 
   @@unique([pensionerId, month, year])
   @@index([month, year, status])
+  @@index([pensionerId, year, month])
 }
 
 model PensionProcessingLog {
@@ -217,6 +223,8 @@ model PensionerPolicy {
   policy         Policy    @relation(fields: [policyId], references: [id], onDelete: Cascade)
 
   @@unique([pensionerId, policyId])
+  @@index([pensionerId])
+  @@index([policyId])
 }
 
 model JeevanPramaanRecord {
@@ -247,6 +255,7 @@ model Grievance {
   history     GrievanceHistory[]
 
   @@index([pensionerId, status])
+  @@index([createdAt])
 }
 
 model GrievanceAttachment {
@@ -286,6 +295,9 @@ model Notification {
   createdById String
   createdAt   DateTime               @default(now())
   receipts    NotificationReceipt[]
+
+  @@index([publishedAt])
+  @@index([createdAt, publishedAt])
 }
 
 model NotificationReceipt {
@@ -297,6 +309,8 @@ model NotificationReceipt {
   pensioner      Pensioner     @relation(fields: [pensionerId], references: [id], onDelete: Cascade)
 
   @@unique([notificationId, pensionerId])
+  @@index([pensionerId, readAt])
+  @@index([pensionerId, notificationId])
 }
 
 model Lead {
@@ -309,6 +323,10 @@ model Lead {
   status      String    @default("NEW")
   createdAt   DateTime  @default(now())
   pensioner   Pensioner @relation(fields: [pensionerId], references: [id], onDelete: Cascade)
+
+  @@index([pensionerId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model Admin {
@@ -332,6 +350,7 @@ model OtpCode {
   createdAt DateTime @default(now())
 
   @@index([mobile, expiresAt])
+  @@index([createdAt])
 }
 
 model AuditLog {
@@ -344,6 +363,10 @@ model AuditLog {
   ipAddress  String?
   createdAt  DateTime @default(now())
   admin      Admin?   @relation(fields: [adminId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt, action])
+  @@index([adminId])
+  @@index([entityType])
 }
 
 model UserActivity {
@@ -353,4 +376,7 @@ model UserActivity {
   metadata    Json?
   createdAt   DateTime  @default(now())
   pensioner   Pensioner @relation(fields: [pensionerId], references: [id], onDelete: Cascade)
+
+  @@index([pensionerId, createdAt])
+  @@index([action])
 }

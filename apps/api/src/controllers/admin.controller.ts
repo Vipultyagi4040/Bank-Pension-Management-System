@@ -91,16 +91,46 @@ export async function createNotification(req: Request, res: Response) {
   res.status(201).json({ success: true, data: notification });
 }
 
-export async function listGrievances(_req: Request, res: Response) {
-  const data = await prisma.grievance.findMany({
-    include: {
-      pensioner: {
-        select: { id: true, employeeId: true, name: true, mobile: true }
+export async function listGrievances(req: Request, res: Response) {
+  const query = z.object({
+    search: z.string().optional(),
+    status: z.enum(["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED", "PENDING", "REJECTED", "SUSPENDED", "INACTIVE"]).optional(),
+    page: z.coerce.number().int().positive().default(1),
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+    sortBy: z.enum(["createdAt", "subject", "updatedAt"]).default("createdAt"),
+    sortOrder: z.enum(["asc", "desc"]).default("desc")
+  }).parse(req.query);
+
+  const where: Record<string, unknown> = {};
+  if (query.search) {
+    where.OR = [
+      { subject: { contains: query.search, mode: "insensitive" as const } },
+      { description: { contains: query.search, mode: "insensitive" as const } },
+      { assignedTo: { contains: query.search, mode: "insensitive" as const } },
+      { pensioner: { name: { contains: query.search, mode: "insensitive" as const } } },
+      { pensioner: { employeeId: { contains: query.search, mode: "insensitive" as const } } }
+    ];
+  }
+  if (query.status) where.status = query.status;
+
+  const orderBy: Record<string, string> = { [query.sortBy]: query.sortOrder };
+
+  const [items, total] = await Promise.all([
+    prisma.grievance.findMany({
+      where,
+      skip: (query.page - 1) * query.limit,
+      take: query.limit,
+      orderBy,
+      include: {
+        pensioner: {
+          select: { id: true, employeeId: true, name: true, mobile: true }
+        }
       }
-    },
-    orderBy: { createdAt: "desc" }
-  });
-  res.json({ success: true, data });
+    }),
+    prisma.grievance.count({ where })
+  ]);
+
+  res.json({ success: true, data: { items, total, page: query.page, limit: query.limit } });
 }
 
 export async function replyGrievance(req: Request, res: Response) {

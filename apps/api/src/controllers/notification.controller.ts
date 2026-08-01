@@ -62,7 +62,7 @@ export async function listNotifications(req: Request, res: Response) {
       take: query.limit,
       orderBy: { createdAt: "desc" },
       include: {
-        receipts: { include: { pensioner: { select: { employeeId: true, name: true, mobile: true } } } }
+        _count: { select: { receipts: true } }
       }
     }),
     prisma.notification.count({ where })
@@ -76,7 +76,7 @@ export async function getNotification(req: Request, res: Response) {
   const data = await prisma.notification.findUnique({
     where: { id },
     include: {
-      receipts: { include: { pensioner: { select: { employeeId: true, name: true, mobile: true } } } }
+      _count: { select: { receipts: true } }
     }
   });
   if (!data) throw new HttpError(404, "Notification not found");

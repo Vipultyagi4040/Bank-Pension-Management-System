@@ -3,7 +3,6 @@ import {
   createLead,
   createMyJeevan,
   getMyDashboard,
-  getMyGrievances,
   getMyJeevan,
   getMyLeads,
   getMyPensionHistory,
@@ -14,7 +13,8 @@ import {
 } from "../controllers/pensioner.controller.js";
 import {
   createGrievance,
-  getMyGrievance
+  getMyGrievance,
+  getMyGrievances
 } from "../controllers/grievance.controller.js";
 import {
   listMyNotifications,

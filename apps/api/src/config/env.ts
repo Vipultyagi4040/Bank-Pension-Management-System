@@ -8,7 +8,7 @@ const schema = z.object({
   JWT_ACCESS_SECRET: z.string().min(16),
   JWT_ACCESS_EXPIRES_IN: z.string().default("1d"),
   OTP_TTL_MINUTES: z.coerce.number().default(5),
-  CORS_ORIGINS: z.string().default("http://localhost:5173")
+  CORS_ORIGINS: z.string().default("http://localhost:5173,http://localhost:5174")
 });
 
 export const env = schema.parse(process.env);

@@ -119,15 +119,22 @@ export async function addGrievanceAttachment(req: Request, res: Response) {
 }
 
 export async function getMyGrievances(req: Request, res: Response) {
-  const data = await prisma.grievance.findMany({
-    where: { pensionerId: req.auth!.id },
-    orderBy: { createdAt: "desc" },
-    include: {
-      attachments: true,
-      history: { orderBy: { performedAt: "desc" } }
-    }
-  });
-  res.json({ success: true, data });
+  const query = z.object({
+    page: z.coerce.number().int().positive().default(1),
+    limit: z.coerce.number().int().min(1).max(50).default(20)
+  }).parse(req.query);
+
+  const where = { pensionerId: req.auth!.id };
+  const [items, total] = await Promise.all([
+    prisma.grievance.findMany({
+      where,
+      skip: (query.page - 1) * query.limit,
+      take: query.limit,
+      orderBy: { createdAt: "desc" }
+    }),
+    prisma.grievance.count({ where })
+  ]);
+  res.json({ success: true, data: { items, total, page: query.page, limit: query.limit } });
 }
 
 export async function getMyGrievance(req: Request, res: Response) {

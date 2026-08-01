@@ -16,5 +16,8 @@
     "dev:desktop": "npm --workspace apps/desktop run electron:dev",
     "build": "npm --workspace apps/api run build && npm --workspace apps/admin run build && npm --workspace apps/portal run build",
     "setup": "npm install && npm --workspace apps/api run prisma:generate"
+  },
+  "dependencies": {
+    "framer-motion": "^12.43.0"
   }
 }

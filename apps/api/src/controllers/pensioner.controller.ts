@@ -65,33 +65,51 @@ export async function updateMyProfile(req: Request, res: Response) {
 }
 
 export async function getMyPensionHistory(req: Request, res: Response) {
-  const data = await prisma.pensionDetail.findMany({
-    where: { pensionerId: req.auth!.id },
-    orderBy: { effectiveFrom: "desc" }
-  });
-  res.json({ success: true, data });
+  const query = z.object({
+    page: z.coerce.number().int().positive().default(1),
+    limit: z.coerce.number().int().min(1).max(50).default(20)
+  }).parse(req.query);
+
+  const where = { pensionerId: req.auth!.id };
+
+  const [items, total] = await Promise.all([
+    prisma.pensionDetail.findMany({
+      where,
+      skip: (query.page - 1) * query.limit,
+      take: query.limit,
+      orderBy: { effectiveFrom: "desc" }
+    }),
+    prisma.pensionDetail.count({ where })
+  ]);
+
+  res.json({ success: true, data: { items, total, page: query.page, limit: query.limit } });
 }
 
 export async function getMySlips(req: Request, res: Response) {
-  const data = await prisma.pensionSlip.findMany({
-    where: { pensionerId: req.auth!.id },
-    orderBy: [{ year: "desc" }, { month: "desc" }]
-  });
-  res.json({ success: true, data });
+  const query = z.object({
+    page: z.coerce.number().int().positive().default(1),
+    limit: z.coerce.number().int().min(1).max(50).default(20)
+  }).parse(req.query);
+
+  const where = { pensionerId: req.auth!.id };
+
+  const [items, total] = await Promise.all([
+    prisma.pensionSlip.findMany({
+      where,
+      skip: (query.page - 1) * query.limit,
+      take: query.limit,
+      orderBy: [{ year: "desc" }, { month: "desc" }]
+    }),
+    prisma.pensionSlip.count({ where })
+  ]);
+
+  res.json({ success: true, data: { items, total, page: query.page, limit: query.limit } });
 }
 
 export async function getMyPolicies(req: Request, res: Response) {
   const data = await prisma.pensionerPolicy.findMany({
     where: { pensionerId: req.auth!.id },
     include: { policy: true }
-  });
-  res.json({ success: true, data });
-}
-
-export async function getMyGrievances(req: Request, res: Response) {
-  const data = await prisma.grievance.findMany({
-    where: { pensionerId: req.auth!.id },
-    orderBy: { createdAt: "desc" }
   });
   res.json({ success: true, data });
 }
@@ -111,19 +129,31 @@ export async function createLead(req: Request, res: Response) {
 }
 
 export async function getMyLeads(req: Request, res: Response) {
-  const data = await prisma.lead.findMany({
-    where: { pensionerId: req.auth!.id },
-    orderBy: { createdAt: "desc" }
-  });
-  res.json({ success: true, data });
+  const query = z.object({
+    page: z.coerce.number().int().positive().default(1),
+    limit: z.coerce.number().int().min(1).max(50).default(20)
+  }).parse(req.query);
+
+  const where = { pensionerId: req.auth!.id };
+  const [items, total] = await Promise.all([
+    prisma.lead.findMany({ where, skip: (query.page - 1) * query.limit, take: query.limit, orderBy: { createdAt: "desc" } }),
+    prisma.lead.count({ where })
+  ]);
+  res.json({ success: true, data: { items, total, page: query.page, limit: query.limit } });
 }
 
 export async function getMyJeevan(req: Request, res: Response) {
-  const data = await prisma.jeevanPramaanRecord.findMany({
-    where: { pensionerId: req.auth!.id },
-    orderBy: { createdAt: "desc" }
-  });
-  res.json({ success: true, data });
+  const query = z.object({
+    page: z.coerce.number().int().positive().default(1),
+    limit: z.coerce.number().int().min(1).max(50).default(20)
+  }).parse(req.query);
+
+  const where = { pensionerId: req.auth!.id };
+  const [items, total] = await Promise.all([
+    prisma.jeevanPramaanRecord.findMany({ where, skip: (query.page - 1) * query.limit, take: query.limit, orderBy: { createdAt: "desc" } }),
+    prisma.jeevanPramaanRecord.count({ where })
+  ]);
+  res.json({ success: true, data: { items, total, page: query.page, limit: query.limit } });
 }
 
 export async function createMyJeevan(req: Request, res: Response) {

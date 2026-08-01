@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Users, Mail, Phone, Calendar, MapPin, Shield, FileText } from "lucide-react";
 import { api } from "../api";
 
 export default function PensionerDetailPage() {
@@ -14,29 +16,60 @@ export default function PensionerDetailPage() {
 
   const p = data.pensionDetails?.[0];
 
-  const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <div className="card" style={{ marginBottom: 16 }}>
+  const Section = ({ title, children, delay = 0 }: { title: string; children: React.ReactNode; delay?: number }) => (
+    <motion.div
+      className="card"
+      style={{ marginBottom: 16 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: 0.15 + delay }}
+      whileHover={{ y: -2 }}
+    >
       <h3 style={{ marginTop: 0 }}>{title}</h3>
       {children}
-    </div>
+    </motion.div>
   );
 
   const Field = ({ label, value }: { label: string; value: string | null | undefined }) => (
-    <div style={{ marginBottom: 8 }}>
-      <span style={{ color: "#667085", fontSize: 13 }}>{label}</span>
-      <div style={{ fontWeight: 500 }}>{value || "-"}</div>
+    <div className="detail-item">
+      <span className="detail-label">{label}</span>
+      <span className="detail-value">{value || "-"}</span>
     </div>
   );
 
   return (
-    <div className="page">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h1>{data.name}</h1>
-        <Link to={`/pensioners/${id}/edit`}><button>Edit</button></Link>
-      </div>
+    <motion.div
+      className="animate-fade-in"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <motion.div
+        className="page-header"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+      >
+        <div>
+          <h1 className="page-title">
+            <Users size={32} className="icon" color="var(--accent)" />
+            {data.name}
+          </h1>
+          <p className="page-subtitle">Pensioner Details</p>
+        </div>
+        <Link to={`/pensioners/${id}/edit`}>
+          <motion.button
+            className="btn btn-secondary"
+            whileHover={{ scale: 1.03, y: -2 }}
+            whileTap={{ scale: 0.97 }}
+          >
+            Edit
+          </motion.button>
+        </Link>
+      </motion.div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))", gap: 16 }}>
-        <Section title="Personal Information">
+      <div className="detail-grid">
+        <Section title="Personal Information" delay={0}>
           <Field label="Employee ID" value={data.employeeId} />
           <Field label="Mobile" value={data.mobile} />
           <Field label="Email" value={data.email} />
@@ -54,7 +87,7 @@ export default function PensionerDetailPage() {
           <Field label="Approved At" value={data.approvedAt?.slice(0, 10)} />
         </Section>
 
-        <Section title="Employment Information">
+        <Section title="Employment Information" delay={0.1}>
           <Field label="Department" value={data.department} />
           <Field label="Designation" value={data.designation} />
           <Field label="Date of Joining" value={data.dateOfJoining?.slice(0, 10)} />
@@ -62,7 +95,7 @@ export default function PensionerDetailPage() {
           <Field label="Pension Type" value={data.pensionType} />
         </Section>
 
-        <Section title="Bank Details">
+        <Section title="Bank Details" delay={0.2}>
           <Field label="Account Holder" value={data.bankAccountHolderName} />
           <Field label="Account Number" value={data.bankAccountNumber} />
           <Field label="IFSC Code" value={data.bankIfscCode} />
@@ -71,13 +104,13 @@ export default function PensionerDetailPage() {
           <Field label="Branch Address" value={data.bankBranchAddress} />
         </Section>
 
-        <Section title="Nominee Details">
+        <Section title="Nominee Details" delay={0.3}>
           <Field label="Nominee Name" value={data.nomineeName} />
           <Field label="Relation" value={data.nomineeRelation} />
           <Field label="Share" value={data.nomineeShare} />
         </Section>
 
-        <Section title="Current Pension">
+        <Section title="Current Pension" delay={0.4}>
           <Field label="PPO Number" value={p?.ppoNumber} />
           <Field label="Category" value={p?.category} />
           <Field label="Pension Amount" value={p ? `₹${p.pensionAmount}` : "-"} />
@@ -85,41 +118,79 @@ export default function PensionerDetailPage() {
           <Field label="Bank Name" value={p?.bankName} />
         </Section>
 
-        <Section title="Documents">
+        <Section title="Documents" delay={0.5}>
           <Field label="Profile Photo" value={data.profilePhotoUrl} />
           <Field label="ID Card" value={data.idCardUrl} />
         </Section>
       </div>
 
-      <div style={{ marginTop: 24 }}>
-        <h3>Recent Records</h3>
-        <div className="cards">
-          <div className="card">
-            <h4>Pension Slips ({data.pensionSlips?.length || 0})</h4>
-            {(data.pensionSlips || []).slice(0, 5).map((s: any) => (
-              <div key={s.id} style={{ padding: "4px 0", borderBottom: "1px solid #f0f0f0" }}>
-                {s.month}/{s.year} - ₹{s.netAmount}
-              </div>
-            ))}
-          </div>
-          <div className="card">
-            <h4>Policies ({data.policies?.length || 0})</h4>
-            {(data.policies || []).slice(0, 5).map((p: any) => (
-              <div key={p.id} style={{ padding: "4px 0", borderBottom: "1px solid #f0f0f0" }}>
-                {p.policy?.title || "Policy"} {p.acknowledgedAt ? "✓" : ""}
-              </div>
-            ))}
-          </div>
-          <div className="card">
-            <h4>Grievances ({data.grievances?.length || 0})</h4>
-            {(data.grievances || []).slice(0, 5).map((g: any) => (
-              <div key={g.id} style={{ padding: "4px 0", borderBottom: "1px solid #f0f0f0" }}>
-                {g.subject} - <b>{g.status}</b>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
+        <motion.div
+          className="card"
+          style={{ marginTop: 24 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+          whileHover={{ y: -2 }}
+        >
+          <h3 style={{ marginTop: 0 }}>Recent Records</h3>
+          <motion.div
+            className="cards"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              visible: { transition: { staggerChildren: 0.1, delayChildren: 0.1 } }
+            }}
+          >
+            {data.pensionSlips && (
+              <motion.div className="card" variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }} transition={{ duration: 0.3 }} whileHover={{ y: -2 }}>
+                <h4>Pension Slips ({data.pensionSlips?.length || 0})</h4>
+                {(data.pensionSlips || []).slice(0, 5).map((s: any, i: number) => (
+                  <motion.div
+                    key={s.id}
+                    style={{ padding: "4px 0", borderBottom: "1px solid #f0f0f0" }}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 + i * 0.03 }}
+                  >
+                    {s.month}/{s.year} - ₹{s.netAmount}
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+            {data.policies && (
+              <motion.div className="card" variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }} transition={{ duration: 0.3 }} whileHover={{ y: -2 }}>
+                <h4>Policies ({data.policies?.length || 0})</h4>
+                {(data.policies || []).slice(0, 5).map((p: any, i: number) => (
+                  <motion.div
+                    key={p.id}
+                    style={{ padding: "4px 0", borderBottom: "1px solid #f0f0f0" }}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 + i * 0.03 }}
+                  >
+                    {p.policy?.title || "Policy"} {p.acknowledgedAt ? "✓" : ""}
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+            {data.grievances && (
+              <motion.div className="card" variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }} transition={{ duration: 0.3 }} whileHover={{ y: -2 }}>
+                <h4>Grievances ({data.grievances?.length || 0})</h4>
+                {(data.grievances || []).slice(0, 5).map((g: any, i: number) => (
+                  <motion.div
+                    key={g.id}
+                    style={{ padding: "4px 0", borderBottom: "1px solid #f0f0f0" }}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 + i * 0.03 }}
+                  >
+                    {g.subject} - <b>{g.status}</b>
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+          </motion.div>
+        </motion.div>
+    </motion.div>
   );
 }

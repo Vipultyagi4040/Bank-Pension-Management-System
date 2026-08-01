@@ -74,7 +74,7 @@ export async function exportReportCsv(req: Request, res: Response) {
     rows = [["Employee ID", "Name", "Department", "Status", "Pension Amount", "Effective From"]];
     const data = await prisma.pensioner.findMany({
       where: { deletedAt: null },
-      include: { pensionDetails: { where: { isCurrent: true }, take: 1 } },
+      include: { pensionDetails: { where: { isCurrent: true }, take: 1, select: { pensionAmount: true, effectiveFrom: true } } },
       orderBy: { createdAt: "desc" }
     });
     for (const p of data) {
@@ -92,7 +92,7 @@ export async function exportReportCsv(req: Request, res: Response) {
     filename = "monthly-pensions.csv";
     rows = [["Month", "Year", "Employee ID", "Name", "Gross", "Deductions", "Net", "Status"]];
     const data = await prisma.monthlyPension.findMany({
-      include: { pensioner: { select: { employeeId: true, name: true } } },
+      select: { month: true, year: true, grossAmount: true, deductions: true, netAmount: true, status: true, pensioner: { select: { employeeId: true, name: true } } },
       orderBy: [{ year: "desc" }, { month: "desc" }]
     });
     for (const m of data) {
@@ -111,7 +111,7 @@ export async function exportReportCsv(req: Request, res: Response) {
     filename = "grievances.csv";
     rows = [["ID", "Pensioner", "Subject", "Status", "Created", "Admin Reply"]];
     const data = await prisma.grievance.findMany({
-      include: { pensioner: { select: { name: true, employeeId: true } } },
+      select: { id: true, subject: true, status: true, createdAt: true, adminReply: true, pensioner: { select: { name: true, employeeId: true } } },
       orderBy: { createdAt: "desc" }
     });
     for (const g of data) {
@@ -128,7 +128,7 @@ export async function exportReportCsv(req: Request, res: Response) {
 
   const csv = rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
   res.setHeader("Content-Type", "text/csv");
-  res.setHeader("Content-Disposition", `attachment; filename=${filename}`);
+  res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
   res.send(csv);
 }
 
@@ -146,12 +146,12 @@ export async function exportReportPdf(req: Request, res: Response) {
   let y = 750;
   const lineHeight = 16;
 
-  if (type.type === "pensioners") {
+   if (type.type === "pensioners") {
     page.drawText("Pensioners Report", { x: 180, y, size: 14, font: boldFont });
     y -= lineHeight * 2;
     const data = await prisma.pensioner.findMany({
       where: { deletedAt: null },
-      include: { pensionDetails: { where: { isCurrent: true }, take: 1 } },
+      include: { pensionDetails: { where: { isCurrent: true }, take: 1, select: { pensionAmount: true, effectiveFrom: true } } },
       orderBy: { createdAt: "desc" }
     });
     for (const p of data) {
@@ -164,7 +164,7 @@ export async function exportReportPdf(req: Request, res: Response) {
     page.drawText("Monthly Pension Report", { x: 180, y, size: 14, font: boldFont });
     y -= lineHeight * 2;
     const data = await prisma.monthlyPension.findMany({
-      include: { pensioner: { select: { employeeId: true, name: true } } },
+      select: { month: true, year: true, grossAmount: true, deductions: true, netAmount: true, status: true, pensioner: { select: { employeeId: true, name: true } } },
       orderBy: [{ year: "desc" }, { month: "desc" }]
     });
     for (const m of data) {
@@ -176,7 +176,7 @@ export async function exportReportPdf(req: Request, res: Response) {
     page.drawText("Grievances Report", { x: 180, y, size: 14, font: boldFont });
     y -= lineHeight * 2;
     const data = await prisma.grievance.findMany({
-      include: { pensioner: { select: { name: true, employeeId: true } } },
+      select: { id: true, subject: true, status: true, createdAt: true, pensioner: { select: { name: true, employeeId: true } } },
       orderBy: { createdAt: "desc" }
     });
     for (const g of data) {
@@ -188,6 +188,6 @@ export async function exportReportPdf(req: Request, res: Response) {
 
   const pdfBytes = await pdfDoc.save();
   res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", `attachment; filename=${type.type}-report.pdf`);
+  res.setHeader("Content-Disposition", `attachment; filename="${type.type}-report.pdf"`);
   res.send(Buffer.from(pdfBytes));
 }

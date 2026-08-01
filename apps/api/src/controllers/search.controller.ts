@@ -40,7 +40,7 @@ export async function globalSearch(req: Request, res: Response) {
         ]
       },
       take: query.limit,
-      include: { pensioner: { select: { name: true, employeeId: true } } }
+      select: { id: true, subject: true, status: true, createdAt: true, pensioner: { select: { name: true, employeeId: true } } }
     });
     results.grievances = grievances;
   }

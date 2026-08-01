@@ -1,5 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
+import { BarChart3, TrendingUp, Calendar } from "lucide-react";
+import { motion } from "framer-motion";
 import { api } from "../api";
+import DataTable, { ColumnDef } from "../components/DataTable";
 
 type DashboardStats = {
   totalPensioners: number;
@@ -36,70 +39,136 @@ export default function PensionReportPage() {
     ["Total Paid", s?.totalPaid],
     ["Pending Payments", s?.pendingPayments],
     ["Current Month Processed", s?.currentMonthProcessed],
-    ["Monthly Trend", s?.monthlyTrend?.length ? `${s.monthlyTrend.length} months` : "-"],
+    ["Monthly Trend", s?.monthlyTrend?.length ? `${s.monthlyTrend.length} months` : "-"]
+  ];
+
+  const monthlyTrendColumns: ColumnDef<any>[] = [
+    { key: "month", label: "Month", sortable: true },
+    {
+      key: "amount",
+      label: "Pension Amount",
+      sortable: true,
+      accessor: (row) => `₹${Number(row.amount).toLocaleString()}`
+    }
+  ];
+
+  const monthlyHistoryColumns: ColumnDef<any>[] = [
+    { key: "month", label: "Month", sortable: true },
+    { key: "year", label: "Year", sortable: true },
+    {
+      key: "_sum.grossAmount",
+      label: "Gross",
+      sortable: false,
+      accessor: (row) => `₹${Number(row._sum?.grossAmount || 0).toLocaleString()}`
+    },
+    {
+      key: "_sum.netAmount",
+      label: "Net",
+      sortable: false,
+      accessor: (row) => `₹${Number(row._sum?.netAmount || 0).toLocaleString()}`
+    }
   ];
 
   return (
-    <div className="page">
-      <h1>Pension Expense Report</h1>
-      <div className="cards">
+    <motion.div
+      className="animate-fade-in"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <motion.div
+        className="page-header"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+      >
+        <div>
+          <h1 className="page-title">
+          <BarChart3 size={32} className="icon" color="var(--accent)" />
+          Pension Expense Report
+        </h1>
+          <p className="page-subtitle">Overview of pension expenses and trends</p>
+        </div>
+      </motion.div>
+
+      <motion.div
+        className="cards"
+        initial="hidden"
+        animate="visible"
+        variants={{
+          visible: { transition: { staggerChildren: 0.08, delayChildren: 0.15 } }
+        }}
+      >
         {rows.map(([label, value]) => (
-          <div className="card" key={String(label)}>
-            <span>{label}</span>
-            <strong>{value != null ? (typeof value === "number" ? `₹${Number(value).toLocaleString()}` : String(value)) : "-"}</strong>
-          </div>
+          <motion.div
+            key={String(label)}
+            className="stat-card"
+            variants={{
+              hidden: { opacity: 0, y: 20, scale: 0.98 },
+              visible: { opacity: 1, y: 0, scale: 1 }
+            }}
+            transition={{ duration: 0.3 }}
+            whileHover={{ y: -3, scale: 1.03 }}
+          >
+            <div className="stat-label">{label}</div>
+            <div className="stat-value">{value != null ? (typeof value === "number" ? `₹${Number(value).toLocaleString()}` : String(value)) : "-"}</div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
       {s?.monthlyTrend && s.monthlyTrend.length > 0 && (
-        <>
-          <h2 style={{ marginTop: 28 }}>Monthly Breakdown</h2>
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Month</th>
-                  <th>Pension Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {s.monthlyTrend.map((row) => (
-                  <tr key={row.month}>
-                    <td>{row.month}</td>
-                    <td>₹{Number(row.amount).toLocaleString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
+        <motion.div
+          className="card"
+          style={{ marginTop: 28 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.3 }}
+          whileHover={{ y: -2 }}
+        >
+          <h3 style={{ marginTop: 0 }}>Monthly Breakdown</h3>
+          <DataTable
+            data={s.monthlyTrend}
+            columns={monthlyTrendColumns}
+            enableSearch={true}
+            searchFields={["month"]}
+            searchPlaceholder="Search month..."
+            enableSorting={true}
+            enableExport={true}
+            exportFilename={`monthly-trend-${new Date().toISOString().slice(0,10)}`}
+            paginated={false}
+            isLoading={false}
+            emptyMessage="No monthly data"
+            emptyIcon={<TrendingUp size={48} />}
+            rowKey={(item, i) => `${item.month}-${i}`}
+          />
+        </motion.div>
       )}
       {sm?.monthlyPensions && sm.monthlyPensions.length > 0 && (
-        <>
-          <h2 style={{ marginTop: 28 }}>Monthly Pension History</h2>
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Month</th>
-                  <th>Year</th>
-                  <th>Gross</th>
-                  <th>Net</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sm.monthlyPensions.map((row) => (
-                  <tr key={`${row.month}-${row.year}`}>
-                    <td>{row.month}</td>
-                    <td>{row.year}</td>
-                    <td>₹{Number(row._sum?.grossAmount || 0).toLocaleString()}</td>
-                    <td>₹{Number(row._sum?.netAmount || 0).toLocaleString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
+        <motion.div
+          className="card"
+          style={{ marginTop: 28 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.4 }}
+          whileHover={{ y: -2 }}
+        >
+          <h3 style={{ marginTop: 0 }}>Monthly Pension History</h3>
+          <DataTable
+            data={sm.monthlyPensions}
+            columns={monthlyHistoryColumns}
+            enableSearch={true}
+            searchFields={["month", "year"]}
+            searchPlaceholder="Search..."
+            enableSorting={true}
+            enableExport={true}
+            exportFilename={`pension-history-${new Date().toISOString().slice(0,10)}`}
+            paginated={false}
+            isLoading={false}
+            emptyMessage="No pension history"
+            emptyIcon={<Calendar size={48} />}
+            rowKey={(item, i) => `${item.month}-${item.year}-${i}`}
+          />
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }

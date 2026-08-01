@@ -13,7 +13,22 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       outDir: "dist",
-      emptyOutDir: true
+      emptyOutDir: true,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            react: ["react", "react-dom"],
+            charts: ["recharts"],
+            icons: ["lucide-react"],
+            motion: ["framer-motion"],
+            router: ["react-router-dom"],
+            query: ["@tanstack/react-query"]
+          }
+        }
+      },
+      commonjsOptions: {
+        include: [/node_modules/]
+      }
     }
   };
 });

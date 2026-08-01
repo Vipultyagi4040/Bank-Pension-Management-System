@@ -176,15 +176,19 @@ export async function getPensionSlip(req: Request, res: Response) {
   const id = z.string().parse(req.params.id);
   const record = await prisma.monthlyPension.findUnique({
     where: { id },
-    include: {
-      pensioner: true,
-      pensionDetail: true
+    select: {
+      id: true, month: true, year: true, basicPension: true, da: true, hra: true,
+      medicalAllowance: true, otherAllowances: true, grossAmount: true, deductions: true,
+      netAmount: true, pensioner: { select: { employeeId: true, name: true, mobile: true, department: true, designation: true } },
+      pensionDetail: { select: { bankName: true, branchName: true, accountLastFour: true, ppoNumber: true } }
     }
   });
   if (!record) throw new HttpError(404, "Monthly pension record not found");
 
   const pdf = await generatePensionSlipPdf({
-    ...record,
+    pensioner: record.pensioner,
+    month: record.month,
+    year: record.year,
     basicPension: Number(record.basicPension),
     da: Number(record.da),
     hra: Number(record.hra),
@@ -192,10 +196,11 @@ export async function getPensionSlip(req: Request, res: Response) {
     otherAllowances: Number(record.otherAllowances),
     grossAmount: Number(record.grossAmount),
     deductions: Number(record.deductions),
-    netAmount: Number(record.netAmount)
+    netAmount: Number(record.netAmount),
+    pensionDetail: record.pensionDetail
   });
   res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", `attachment; filename=pension-slip-${record.pensioner.employeeId}-${record.month}-${record.year}.pdf`);
+  res.setHeader("Content-Disposition", `attachment; filename="pension-slip-${record.pensioner.employeeId}-${record.month}-${record.year}.pdf"`);
   res.send(Buffer.from(await pdf.save()));
 }
 
@@ -203,13 +208,18 @@ export async function downloadMySlip(req: Request, res: Response) {
   const id = z.string().parse(req.params.id);
   const record = await prisma.pensionSlip.findFirst({
     where: { id, pensionerId: req.auth!.id },
-    include: { pensioner: true }
+    select: {
+      id: true, pensionerId: true, month: true, year: true, basicPension: true, da: true, hra: true,
+      medicalAllowance: true, otherAllowances: true, grossAmount: true, deductions: true,
+      netAmount: true, pensioner: { select: { employeeId: true, name: true, mobile: true, department: true, designation: true } }
+    }
   });
   if (!record) throw new HttpError(404, "Pension slip not found");
 
   const pensionDetail = await prisma.pensionDetail.findFirst({
     where: { pensionerId: record.pensionerId, isCurrent: true },
-    orderBy: { effectiveFrom: "desc" }
+    orderBy: { effectiveFrom: "desc" },
+    select: { bankName: true, branchName: true, accountLastFour: true, ppoNumber: true }
   });
 
   const pdf = await generatePensionSlipPdf({
@@ -227,7 +237,7 @@ export async function downloadMySlip(req: Request, res: Response) {
     pensionDetail: pensionDetail || null
   });
   res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", `attachment; filename=pension-slip-${record.pensioner.employeeId}-${record.month}-${record.year}.pdf`);
+  res.setHeader("Content-Disposition", `attachment; filename="pension-slip-${record.pensioner.employeeId}-${record.month}-${record.year}.pdf"`);
   res.send(Buffer.from(await pdf.save()));
 }
 
@@ -236,12 +246,19 @@ export async function downloadLatestSlip(req: Request, res: Response) {
   const record = await prisma.monthlyPension.findFirst({
     where: { pensionerId, status: { in: ["PROCESSED", "PAID"] } },
     orderBy: [{ year: "desc" }, { month: "desc" }],
-    include: { pensioner: true, pensionDetail: true }
+    select: {
+      id: true, month: true, year: true, basicPension: true, da: true, hra: true,
+      medicalAllowance: true, otherAllowances: true, grossAmount: true, deductions: true,
+      netAmount: true, pensioner: { select: { employeeId: true, name: true, mobile: true, department: true, designation: true } },
+      pensionDetail: { select: { bankName: true, branchName: true, accountLastFour: true, ppoNumber: true } }
+    }
   });
   if (!record) throw new HttpError(404, "No pension slip available");
 
   const pdf = await generatePensionSlipPdf({
-    ...record,
+    pensioner: record.pensioner,
+    month: record.month,
+    year: record.year,
     basicPension: Number(record.basicPension),
     da: Number(record.da),
     hra: Number(record.hra),
@@ -249,10 +266,11 @@ export async function downloadLatestSlip(req: Request, res: Response) {
     otherAllowances: Number(record.otherAllowances),
     grossAmount: Number(record.grossAmount),
     deductions: Number(record.deductions),
-    netAmount: Number(record.netAmount)
+    netAmount: Number(record.netAmount),
+    pensionDetail: record.pensionDetail
   });
   res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", `attachment; filename=pension-slip-${record.pensioner.employeeId}-${record.month}-${record.year}.pdf`);
+  res.setHeader("Content-Disposition", `attachment; filename="pension-slip-${record.pensioner.employeeId}-${record.month}-${record.year}.pdf"`);
   res.send(Buffer.from(await pdf.save()));
 }
 
@@ -345,12 +363,14 @@ export async function getDashboardStats(_req: Request, res: Response) {
   const currentMonth = new Date().getMonth() + 1;
   const currentYear = new Date().getFullYear();
 
-  const [totalPensioners, totalMonthlyPension, totalPaid, pendingPayments, currentMonthProcessed, monthlyTrend] = await Promise.all([
+  const [totalPensioners, monthlyStats, monthlyTrend] = await Promise.all([
     prisma.pensioner.count({ where: { status: "APPROVED", deletedAt: null } }),
-    prisma.monthlyPension.aggregate({ where: { month: currentMonth, year: currentYear }, _sum: { netAmount: true } }),
-    prisma.monthlyPension.count({ where: { month: currentMonth, year: currentYear, status: "PAID" } }),
-    prisma.monthlyPension.count({ where: { month: currentMonth, year: currentYear, status: { in: ["PENDING", "PROCESSED"] } } }),
-    prisma.monthlyPension.count({ where: { month: currentMonth, year: currentYear } }),
+    prisma.monthlyPension.groupBy({
+      by: ["status"],
+      where: { month: currentMonth, year: currentYear },
+      _count: { _all: true },
+      _sum: { netAmount: true }
+    }),
     prisma.monthlyPension.groupBy({
       by: ["month", "year"],
       where: { year: currentYear },
@@ -358,6 +378,13 @@ export async function getDashboardStats(_req: Request, res: Response) {
       orderBy: { month: "asc" }
     })
   ]);
+
+  const totalPaid = monthlyStats.find(s => s.status === "PAID")?._count._all ?? 0;
+  const pendingPayments = monthlyStats
+    .filter(s => s.status === "PENDING" || s.status === "PROCESSED")
+    .reduce((sum, s) => sum + (s._count._all || 0), 0);
+  const currentMonthProcessed = monthlyStats.reduce((sum, s) => sum + (s._count._all || 0), 0);
+  const totalMonthlyPension = monthlyStats.reduce((sum, s) => sum + Number(s._sum.netAmount || 0), 0);
 
   const monthlyData = monthlyTrend.map(item => ({
     month: `${item.month.toString().padStart(2, "0")}/${item.year}`,
@@ -368,7 +395,7 @@ export async function getDashboardStats(_req: Request, res: Response) {
     success: true,
     data: {
       totalPensioners,
-      totalMonthlyPension: Number(totalMonthlyPension._sum.netAmount || 0),
+      totalMonthlyPension,
       totalPaid,
       pendingPayments,
       currentMonthProcessed,

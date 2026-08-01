@@ -1,16 +1,88 @@
+version: "3.8"
+
 services:
+  # PostgreSQL Database
   postgres:
-    image: postgres:16-alpine
+    image: postgres:15-alpine
     container_name: pension-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: pension
-      POSTGRES_PASSWORD: pension
+      POSTGRES_USER: pension_user
+      POSTGRES_PASSWORD: Pension@123
       POSTGRES_DB: pension_db
     ports:
       - "5432:5432"
     volumes:
-      - pension_postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - pension-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pension_user -d pension_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: pension-api
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      DATABASE_URL: postgresql://pension_user:Pension@123@postgres:5432/pension_db?schema=public
+      JWT_ACCESS_SECRET: your-super-secret-jwt-key-change-in-production
+      JWT_ACCESS_EXPIRES_IN: 1d
+      OTP_TTL_MINUTES: 5
+      CORS_ORIGINS: http://localhost:5173,http://localhost:5174,http://localhost:3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./apps/api/uploads:/app/uploads
+    networks:
+      - pension-network
+    command: npm run start
+
+  # Admin Portal
+  admin:
+    build:
+      context: ./apps/admin
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:4000/api/v1
+    container_name: pension-admin
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    environment:
+      VITE_API_URL: http://localhost:4000/api/v1
+    networks:
+      - pension-network
+
+  # Pensioner Portal
+  portal:
+    build:
+      context: ./apps/portal
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:4000/api/v1
+    container_name: pension-portal
+    restart: unless-stopped
+    ports:
+      - "5174:80"
+    environment:
+      VITE_API_URL: http://localhost:4000/api/v1
+    networks:
+      - pension-network
 
 volumes:
-  pension_postgres_data:
+  postgres_data:
+
+networks:
+  pension-network:
+    driver: bridge
