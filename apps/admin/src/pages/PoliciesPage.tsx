@@ -22,8 +22,10 @@ export default function PoliciesPage() {
   const queryClient = useQueryClient();
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["policies"],
-    queryFn: async () => (await api.get("/management/policies")).data.data as Policy[]
+    queryFn: async () => (await api.get("/management/policies")).data.data as { items: Policy[]; total: number; page: number; limit: number }
   });
+
+  const policies = data?.items || [];
 
   const [form, setForm] = useState({
     id: "",
@@ -43,8 +45,8 @@ export default function PoliciesPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (editingId && data) {
-      const item = data.find(p => p.id === editingId);
+    if (editingId && policies) {
+      const item = policies.find(p => p.id === editingId);
       if (item) {
         setForm({
           id: item.id,
@@ -71,7 +73,7 @@ export default function PoliciesPage() {
         consentRequired: false
       });
     }
-  }, [editingId, data]);
+  }, [editingId, policies]);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -402,7 +404,7 @@ export default function PoliciesPage() {
         transition={{ duration: 0.3, delay: 0.5 }}
       >
         <DataTable
-          data={data || []}
+          data={policies}
           columns={columns}
           enableSearch={false}
           enableSorting={false}

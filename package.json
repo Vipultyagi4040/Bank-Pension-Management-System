@@ -18,6 +18,13 @@
     "setup": "npm install && npm --workspace apps/api run prisma:generate"
   },
   "dependencies": {
-    "framer-motion": "^12.43.0"
+    "es-toolkit": "^1.50.0",
+    "framer-motion": "^12.43.0",
+    "lucide-react": "^1.28.0",
+    "recharts": "^3.10.1"
+  },
+  "overrides": {
+    "@types/express": "^4.17.21",
+    "@types/express-serve-static-core": "^4.17.21"
   }
 }

@@ -1541,7 +1541,7 @@ function Grievances(){
   const [list, setList] = useState<any[]>([]);
   const [detail, setDetail] = useState<any>(null);
 
-  const loadList = () => api.get("/pensioner/grievances").then(r => setList(r.data.data));
+  const loadList = () => api.get("/pensioner/grievances").then(r => setList(r.data.data.items || []));
   const loadDetail = (id: string) => api.get(`/pensioner/grievances/${id}`).then(r => { setDetail(r.data.data); setSelectedId(id); });
 
   useEffect(() => { void loadList(); }, []);
@@ -1769,7 +1769,7 @@ function Jeevan(){
   const queryClient = useQueryClient();
   const { data, isLoading, error } = useQuery({
     queryKey: ["jeevan"],
-    queryFn: async () => (await api.get("/pensioner/jeevan")).data.data
+    queryFn: async () => (await api.get("/pensioner/jeevan")).data.data.items
   });
 
   const [form, setForm] = useState({ applicationNumber: "", status: "NOT_SUBMITTED", submissionDate: "", remarks: "" });
@@ -1786,6 +1786,8 @@ function Jeevan(){
 
   if (isLoading) return <Layout><p>Loading...</p></Layout>;
   if (error) return <Layout><p className="error">Failed to load Jeevan Pramaan records</p></Layout>;
+
+  const records = data || [];
 
   return (
     <Layout>
@@ -1864,7 +1866,7 @@ function Jeevan(){
 
       <h2 style={{ marginTop: 32 }}>Your Records</h2>
       <div className="cards">
-        {data?.map((item: any) => (
+        {records.map((item: any) => (
           <div className="card" key={item.id}>
             <p><b>Application Number:</b> {item.applicationNumber || "-"}</p>
             <p><b>Status:</b> {item.status}</p>

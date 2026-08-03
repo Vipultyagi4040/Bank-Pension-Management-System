@@ -218,7 +218,7 @@ async function createPensioners() {
   const usedMobiles = new Set<string>();
   const usedAadhaars = new Set<string>();
 
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < 100; i++) {
     const firstName = randomItem(INDIAN_FIRST_NAMES);
     const lastName = randomItem(INDIAN_LAST_NAMES);
     const name = `${firstName} ${lastName}`;
@@ -247,7 +247,7 @@ async function createPensioners() {
       aadhaarNumber: aadhaar,
       bloodGroup: randomItem(BLOOD_GROUPS),
       emergencyContactName: `${randomItem(INDIAN_FIRST_NAMES)} ${lastName}`,
-      emergencyContactMobile: generateMobile(i + 50),
+      emergencyContactMobile: generateMobile(i + 100),
       address: `${randomInt(1, 999)} ${randomItem(["Main", "Park", "Temple", "Market", "Station"])} Road, ${district}, ${state} - ${randomInt(100000, 999999)}`,
       department: randomItem(DEPARTMENTS),
       designation: randomItem(DESIGNATIONS),
@@ -369,7 +369,7 @@ async function createMonthlyPensions(pensioners: any[]) {
 }
 
 async function createPolicies() {
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 40; i++) {
     const policyNumber = `POL-2026-${String(i + 1).padStart(3, "0")}`;
     await prisma.policy.upsert({
       where: { policyNumber },
@@ -390,7 +390,7 @@ async function createPolicies() {
 }
 
 async function createNotifications(pensioners: any[]) {
-  for (let i = 0; i < 100; i++) {
+  for (let i = 0; i < 200; i++) {
     const notification = await prisma.notification.create({
       data: {
         title: randomItem(NOTIFICATION_TITLES),
@@ -416,7 +416,7 @@ async function createNotifications(pensioners: any[]) {
 }
 
 async function createGrievances(pensioners: any[]) {
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < 100; i++) {
     const pensioner = randomItem(pensioners);
     const status = randomItem<GrievanceStatus>([
       GrievanceStatus.OPEN,
@@ -452,7 +452,7 @@ async function createGrievances(pensioners: any[]) {
 }
 
 async function createJeevanPramaanRecords(pensioners: any[]) {
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < 100; i++) {
     const pensioner = randomItem(pensioners);
     const status = randomItem<JeevanPramaanStatus>([
       JeevanPramaanStatus.NOT_SUBMITTED,
@@ -477,7 +477,7 @@ async function createJeevanPramaanRecords(pensioners: any[]) {
 
 async function createAuditLogs(pensioners: any[]) {
   const admins = await prisma.admin.findMany();
-  for (let i = 0; i < 100; i++) {
+  for (let i = 0; i < 200; i++) {
     await prisma.auditLog.create({
       data: {
         adminId: randomItem(admins).id,
