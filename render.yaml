@@ -12,7 +12,7 @@ services:
         value: "false"
     envVariables:
       - key: NODE_ENV
-        value: development
+        value: production
       - key: PORT
         value: 4000
       - key: JWT_ACCESS_SECRET
@@ -21,6 +21,8 @@ services:
         value: 1d
       - key: OTP_TTL_MINUTES
         value: 5
+      - key: OTP_DEMO_MODE
+        value: "true"
       - key: CORS_ORIGINS
         value: https://bank-pension-management-system-admi.vercel.app,https://bank-pension-management-system-port.vercel.app,https://bank-pension-management-system-5.onrender.com
       - key: DATABASE_URL
