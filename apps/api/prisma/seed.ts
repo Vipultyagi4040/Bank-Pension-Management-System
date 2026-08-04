@@ -288,6 +288,11 @@ async function createPensioners() {
 
 async function createPensionDetails(pensioners: any[]) {
   for (const pensioner of pensioners) {
+    const existing = await prisma.pensionDetail.findFirst({
+      where: { pensionerId: pensioner.id }
+    });
+    if (existing) continue;
+
     const basicPension = randomInt(15000, 75000);
     const da = Math.round(basicPension * randomInt(20, 35) / 100);
     const hra = Math.round(basicPension * randomInt(8, 20) / 100);
@@ -318,7 +323,7 @@ async function createPensionDetails(pensioners: any[]) {
         isCurrent: true,
         status: "ACTIVE"
       }
-    }).catch(() => undefined);
+    });
   }
 }
 
@@ -345,8 +350,22 @@ async function createMonthlyPensions(pensioners: any[]) {
       const deductions = Number(pensionDetail.deductions);
       const netAmount = grossAmount - deductions;
 
-      await prisma.monthlyPension.create({
-        data: {
+      const status = randomItem(["PENDING", "PROCESSED", "PAID", "PAID", "PAID"]);
+
+      await prisma.monthlyPension.upsert({
+        where: {
+          pensionerId_month_year: {
+            pensionerId: pensioner.id,
+            month: m,
+            year,
+          }
+        },
+        update: {
+          netAmount,
+          status,
+          paymentDate: status === "PAID" ? randomDate(new Date(year, m - 1, 1), new Date(year, m - 1, 31)) : null,
+        },
+        create: {
           pensionerId: pensioner.id,
           pensionDetailId: pensionDetail.id,
           month: m,
@@ -359,11 +378,11 @@ async function createMonthlyPensions(pensioners: any[]) {
           grossAmount,
           deductions,
           netAmount,
-          status: randomItem(["PENDING", "PROCESSED", "PAID", "PAID", "PAID"]),
-          paymentDate: randomItem(["PENDING", "PROCESSED", "PAID", "PAID", "PAID"]) === "PAID" ? randomDate(new Date(year, m - 1, 1), new Date(year, m - 1, 31)) : null,
+          status,
+          paymentDate: status === "PAID" ? randomDate(new Date(year, m - 1, 1), new Date(year, m - 1, 31)) : null,
           slipUrl: `https://example.com/slips/${pensioner.id}-${year}-${String(m).padStart(2, "0")}.pdf`
         }
-      }).catch(() => undefined);
+      });
     }
   }
 }
@@ -390,6 +409,10 @@ async function createPolicies() {
 }
 
 async function createNotifications(pensioners: any[]) {
+  const existingCount = await prisma.notification.count();
+  if (existingCount > 0) return;
+
+  const admins = await prisma.admin.findMany();
   for (let i = 0; i < 200; i++) {
     const notification = await prisma.notification.create({
       data: {
@@ -397,25 +420,40 @@ async function createNotifications(pensioners: any[]) {
         message: randomItem(NOTIFICATION_MESSAGES),
         audience: randomItem([NotificationAudience.ALL, NotificationAudience.SELECTED]),
         publishedAt: randomDate(new Date(2025, 0, 1), new Date(2026, 5, 30)),
-        createdById: randomItem(pensioners).id,
+        createdById: randomItem(admins).id,
         scheduledAt: Math.random() > 0.7 ? randomDate(new Date(2026, 6, 1), new Date(2026, 12, 31)) : null
       }
     });
 
     const selectedPensioners = Math.random() > 0.5 ? pensioners.slice(0, randomInt(5, 20)) : [randomItem(pensioners)];
     for (const pensioner of selectedPensioners) {
+      const existing = await prisma.notificationReceipt.findUnique({
+        where: {
+          notificationId_pensionerId: {
+            notificationId: notification.id,
+            pensionerId: pensioner.id,
+          }
+        }
+      });
+      if (existing) continue;
+
       await prisma.notificationReceipt.create({
         data: {
           notificationId: notification.id,
           pensionerId: pensioner.id,
           readAt: Math.random() > 0.4 ? randomDate(new Date(2025, 0, 1), new Date(2026, 5, 30)) : null
         }
-      }).catch(() => undefined);
+      });
     }
   }
 }
 
 async function createGrievances(pensioners: any[]) {
+  const existingCount = await prisma.grievance.count();
+  if (existingCount > 0) return;
+
+  const admins = await prisma.admin.findMany();
+
   for (let i = 0; i < 100; i++) {
     const pensioner = randomItem(pensioners);
     const status = randomItem<GrievanceStatus>([
@@ -434,7 +472,7 @@ async function createGrievances(pensioners: any[]) {
         adminReply: status === GrievanceStatus.RESOLVED || status === GrievanceStatus.CLOSED
           ? "We have reviewed your grievance and taken necessary action. Please contact the branch for further details."
           : null,
-        assignedTo: randomItem(pensioners).name
+        assignedTo: randomItem(admins).name
       }
     });
 
@@ -445,13 +483,16 @@ async function createGrievances(pensioners: any[]) {
         fromStatus: GrievanceStatus.OPEN,
         toStatus: status,
         note: "Grievance registered and assigned to concerned department.",
-        performedBy: randomItem(pensioners).name
+        performedBy: randomItem(admins).name
       }
     });
   }
 }
 
 async function createJeevanPramaanRecords(pensioners: any[]) {
+  const existingCount = await prisma.jeevanPramaanRecord.count();
+  if (existingCount > 0) return;
+
   for (let i = 0; i < 100; i++) {
     const pensioner = randomItem(pensioners);
     const status = randomItem<JeevanPramaanStatus>([
@@ -476,6 +517,9 @@ async function createJeevanPramaanRecords(pensioners: any[]) {
 }
 
 async function createAuditLogs(pensioners: any[]) {
+  const existingCount = await prisma.auditLog.count();
+  if (existingCount > 0) return;
+
   const admins = await prisma.admin.findMany();
   for (let i = 0; i < 200; i++) {
     await prisma.auditLog.create({
