@@ -12,7 +12,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-ARG VITE_API_URL=https://bank-pension-management-system-2.onrender.com/api/v1
+ARG VITE_API_URL=https://bank-pension-management-system-5.onrender.com/api/v1
 ENV VITE_API_URL=$VITE_API_URL
 
 RUN npm run build
