@@ -5,7 +5,7 @@ import { env } from "../config/env.js";
 import { HttpError } from "../utils/http-error.js";
 
 export async function createOtp(mobile: string) {
-  const code = env.NODE_ENV === "development"
+  const code = env.NODE_ENV === "development" || env.OTP_DEMO_MODE === "true"
     ? "123456"
     : crypto.randomInt(100000, 999999).toString();
 
@@ -23,7 +23,7 @@ export async function createOtp(mobile: string) {
 
   return {
     expiresAt,
-    developmentOtp: env.NODE_ENV === "development" ? code : undefined
+    developmentOtp: (env.NODE_ENV === "development" || env.OTP_DEMO_MODE === "true") ? code : undefined
   };
 }
 
