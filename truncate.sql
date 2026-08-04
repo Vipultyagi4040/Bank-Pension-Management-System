@@ -1,0 +1,1 @@
+TRUNCATE TABLE "Admin", "Pensioner", "PensionDetail", "MonthlyPension", "Policy", "Notification", "NotificationReceipt", "Grievance", "GrievanceHistory", "JeevanPramaanRecord", "AuditLog", "Lead", "PensionerPolicy", "PensionSlip", "UserActivity", "OtpCode" CASCADE;
