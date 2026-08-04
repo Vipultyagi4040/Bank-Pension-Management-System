@@ -60,36 +60,42 @@ app.use("/api/v1/pensioner", apiRateLimiter, pensionerRouter);
 app.use("/api/v1/admin", apiRateLimiter, adminRouter);
 app.use("/api/v1/management", apiRateLimiter, managementRouter);
 
+import fs from "fs";
+
 const adminDist = path.join(__dirname, "..", "..", "..", "admin", "dist");
 const portalDist = path.join(__dirname, "..", "..", "..", "portal", "dist");
 
-app.use("/admin", express.static(adminDist, {
-  setHeaders: (res, filePath) => {
-    if (filePath.endsWith(".html")) {
-      res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
-    } else {
-      res.setHeader("Cache-Control", "public, max-age=86400");
+if (fs.existsSync(adminDist)) {
+  app.use("/admin", express.static(adminDist, {
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith(".html")) {
+        res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+      } else {
+        res.setHeader("Cache-Control", "public, max-age=86400");
+      }
     }
-  }
-}));
+  }));
 
-app.use("/", express.static(portalDist, {
-  setHeaders: (res, filePath) => {
-    if (filePath.endsWith(".html")) {
-      res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
-    } else {
-      res.setHeader("Cache-Control", "public, max-age=86400");
+  app.get("/admin/*", (_req, res) => {
+    res.sendFile(path.join(adminDist, "index.html"));
+  });
+}
+
+if (fs.existsSync(portalDist)) {
+  app.use("/", express.static(portalDist, {
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith(".html")) {
+        res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+      } else {
+        res.setHeader("Cache-Control", "public, max-age=86400");
+      }
     }
-  }
-}));
+  }));
 
-app.get("/admin/*", (_req, res) => {
-  res.sendFile(path.join(adminDist, "index.html"));
-});
-
-app.get("/*", (_req, res) => {
-  res.sendFile(path.join(portalDist, "index.html"));
-});
+  app.get("/*", (_req, res) => {
+    res.sendFile(path.join(portalDist, "index.html"));
+  });
+}
 
 app.use(notFound);
 app.use(errorHandler);
