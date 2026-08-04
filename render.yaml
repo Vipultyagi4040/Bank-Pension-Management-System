@@ -22,7 +22,7 @@ services:
       - key: OTP_TTL_MINUTES
         value: 5
       - key: CORS_ORIGINS
-        value: https://admin.your-domain.com,https://portal.your-domain.com
+        value: https://bank-pension-management-system-admi.vercel.app,https://bank-pension-management-system-portal.vercel.app
       - key: DATABASE_URL
         fromDatabase:
           name: pension_db
