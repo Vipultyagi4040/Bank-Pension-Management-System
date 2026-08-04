@@ -12,7 +12,7 @@ services:
         value: "false"
     envVariables:
       - key: NODE_ENV
-        value: production
+        value: development
       - key: PORT
         value: 4000
       - key: JWT_ACCESS_SECRET
