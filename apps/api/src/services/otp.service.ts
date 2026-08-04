@@ -5,9 +5,7 @@ import { env } from "../config/env.js";
 import { HttpError } from "../utils/http-error.js";
 
 export async function createOtp(mobile: string) {
-  const code = env.NODE_ENV === "development" || env.OTP_DEMO_MODE === "true"
-    ? "123456"
-    : crypto.randomInt(100000, 999999).toString();
+  const code = crypto.randomInt(100000, 999999).toString();
 
   const codeHash = await bcrypt.hash(code, 10);
   const expiresAt = new Date(Date.now() + env.OTP_TTL_MINUTES * 60_000);
