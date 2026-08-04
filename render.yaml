@@ -5,9 +5,8 @@ services:
     plan: free
     workingDirectory: apps/api
     buildCommand: npm install && npm run prisma:generate && npm run build
-    startCommand: npm run start:prod
+    startCommand: npx tsx prisma/seed.ts & npm run start:prod
     preDeployCommand: npx prisma migrate deploy
-    postdeploy: npx tsx prisma/seed.ts
     buildEnvVars:
       - key: NPM_CONFIG_PRODUCTION
         value: "false"
