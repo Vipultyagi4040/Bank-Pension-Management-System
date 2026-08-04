@@ -44,3 +44,19 @@ deploy/
 # Misc
 *.local
 *.tsbuildinfo
+
+# Test artifacts
+admin-login.json
+admin-token-new.json
+admin-token.txt
+grievance-result.json
+import-test.json
+otp-request.json
+otp-result.json
+otp-result1.json
+otp-verify.json
+p-token.txt
+pensioner-token.txt
+profile-update.json
+register-test.json
+tmp-check.js

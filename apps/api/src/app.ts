@@ -34,7 +34,7 @@ app.use(helmet({
   },
   crossOriginEmbedderPolicy: false
 }));
-app.use(hpp());
+app.use(hpp() as any);
 app.use(cors({
   origin(origin, callback) {
     if (!origin || origins.includes(origin)) return callback(null, true);

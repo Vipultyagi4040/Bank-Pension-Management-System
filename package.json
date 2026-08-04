@@ -2,7 +2,7 @@
   "name": "bank-pension-system",
   "private": true,
   "engines": {
-    "node": "20.x"
+    "node": "24.x"
   },
   "workspaces": [
     "apps/api",

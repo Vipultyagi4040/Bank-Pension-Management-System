@@ -1,4 +1,4 @@
-FROM node:20-alpine AS base
+FROM node:24-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -51,4 +51,4 @@ EXPOSE 4000
 ENV PORT 4000
 ENV HOSTNAME "0.0.0.0"
 
-CMD ["node", "dist/server.js"]
+CMD ["node", "dist/src/server.prod.js"]
