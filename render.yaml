@@ -1,13 +1,12 @@
 # Bank Pension Management System - Render Deployment Configuration
-# Last updated: 2026-08-05
 services:
   - type: web
     name: bank-pension-api
     runtime: node
     plan: free
     workingDirectory: apps/api
-    buildCommand: npm install && npm run prisma:generate && npm run build # Force rebuild with latest code
-    startCommand: npx tsx src/server.prod.ts # Run TypeScript directly to avoid stale dist/ issue
+    buildCommand: npm install && npm run prisma:generate && npm run build
+    startCommand: npx tsx prisma/seed.ts && npm run start:prod
     preDeployCommand: npx prisma migrate deploy
     buildEnvVars:
       - key: NPM_CONFIG_PRODUCTION
@@ -35,4 +34,3 @@ services:
       - name: pension_db
         plan: free
         type: postgresql
-

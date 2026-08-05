@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, Link, useLocation, useNavigate } from "react-r
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { LayoutDashboard, User, FileText, Bell, MessageSquare, Users, FileBarChart, LogOut, Menu, X, Shield, Smartphone, Search, Calendar, Plus, Send, Clock, AlertCircle, TrendingUp, Download, CheckCircle, Hash, Phone, Mail, MapPin, Banknote, CreditCard, FileText as FileTextIcon, Lock, Eye, EyeOff, Key, Activity, Briefcase } from "lucide-react";
+import axios from "axios";
 import { api } from "./api";
 import DataTable, { ColumnDef, FilterOption } from "./components/DataTable";
 import FormField from "./components/FormField";
@@ -36,10 +37,10 @@ function Login(){
     setSubmitting(true);
     try{
       if(!stage){
-        const r=await api.post("/auth/pensioner/request-otp",{mobile});
+        const r=await axios.post("/api/v1/auth/pensioner/request-otp",{mobile});
         setDev(r.data.data.developmentOtp||"");setStage(true)
       }else{
-        const r=await api.post("/auth/pensioner/verify-otp",{mobile,otp});
+        const r=await axios.post("/api/v1/auth/pensioner/verify-otp",{mobile,otp});
         localStorage.setItem("pensionerToken",r.data.data.accessToken);
         location.href="/"
       }
@@ -124,7 +125,7 @@ function Login(){
           </motion.button>
         </form>
         <p style={{ textAlign: "center", marginTop: 24, fontSize: "0.85rem", color: "var(--text-muted)" }}>
-          Demo: 9999999999 / OTP 123456
+          Demo: 9999999999 (new OTP shown on each request)
         </p>
       </div>
     </div>

@@ -52,7 +52,7 @@ app.use(express.urlencoded({ extended: false, limit: "2mb" }));
 app.use(morgan(env.NODE_ENV === "production" ? "combined" : "dev"));
 
 app.get("/api/v1/health", (_req, res) => {
-  res.json({ success: true, service: "bank-pension-api", deployMarker: "v5-otp-demo-mode" });
+  res.json({ success: true, service: "bank-pension-api" });
 });
 
 app.use("/api/v1/auth", authRateLimiter, authRouter);
