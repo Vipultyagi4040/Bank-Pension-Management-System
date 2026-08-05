@@ -55,14 +55,6 @@ app.get("/api/v1/health", (_req, res) => {
   res.json({ success: true, service: "bank-pension-api" });
 });
 
-app.get("/api/v1/debug/env", (_req, res) => {
-  res.json({
-    NODE_ENV: process.env.NODE_ENV,
-    OTP_DEMO_MODE: process.env.OTP_DEMO_MODE,
-    envParsed: env.OTP_DEMO_MODE
-  });
-});
-
 app.use("/api/v1/auth", authRateLimiter, authRouter);
 app.use("/api/v1/pensioner", apiRateLimiter, pensionerRouter);
 app.use("/api/v1/admin", apiRateLimiter, adminRouter);
