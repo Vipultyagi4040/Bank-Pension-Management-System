@@ -86,8 +86,13 @@ export default async function handler(req, res) {
     const token = await getAdminToken();
 
     const url = new URL(req.url, 'http://localhost:3000');
-    const path = url.pathname;
+    const path = url.pathname; // e.g. /api/v1/pensioner/dashboard
     const query = Object.fromEntries(url.searchParams);
+
+    // Strip /api/v1 prefix to get the Render API path (e.g. /pensioner/dashboard)
+    const renderPath = path.replace(/^\/api\/v1/, '');
+    // Strip /pensioner to get the endpoint (e.g. /dashboard)
+    const endpoint = renderPath.replace(/^\/pensioner/, '');
 
     let mobile = '9999999999';
     const authHeader = req.headers.authorization;
@@ -117,8 +122,7 @@ export default async function handler(req, res) {
     const detailData = await detailRes.json();
     const pensioner = detailData.data;
 
-    const endpoint = path.replace(/^\/pensioner/, '');
-
+    // Endpoint is already computed above (renderPath with /pensioner stripped)
     // GET /pensioner/profile
     if (endpoint === '/profile' && req.method === 'GET') {
       return res.status(200).json({ success: true, data: pensioner });
@@ -263,7 +267,7 @@ export default async function handler(req, res) {
     }
 
     // Fallback: proxy to Render
-    const renderUrl = `${RENDER_API_URL}${path}${url.search}`;
+    const renderUrl = `${RENDER_API_URL}${renderPath}${url.search}`;
     const renderRes = await fetch(renderUrl, {
       method: req.method,
       headers: {
