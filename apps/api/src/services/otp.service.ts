@@ -21,7 +21,7 @@ export async function createOtp(mobile: string) {
 
   return {
     expiresAt,
-    developmentOtp: (env.NODE_ENV === "development" || env.OTP_DEMO_MODE === "true") ? code : undefined
+    developmentOtp: (env.NODE_ENV === "development" || env.OTP_DEMO_MODE === "true" || process.env.OTP_DEMO_MODE === "true") ? code : undefined
   };
 }
 
