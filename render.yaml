@@ -6,8 +6,8 @@ services:
     runtime: node
     plan: free
     workingDirectory: apps/api
-    buildCommand: npm install && npm run prisma:generate && npm run build # Force cache invalidation
-    startCommand: npm run start:prod
+    buildCommand: npm install && npm run prisma:generate && npm run build # Force rebuild with latest code
+    startCommand: npx tsx src/server.prod.ts # Run TypeScript directly to avoid stale dist/ issue
     preDeployCommand: npx prisma migrate deploy
     buildEnvVars:
       - key: NPM_CONFIG_PRODUCTION
