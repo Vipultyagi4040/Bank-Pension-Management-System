@@ -1,5 +1,6 @@
 // Vercel serverless function for OTP verification endpoint
-// Verifies OTP from time-based generation and proxies to Render API for JWT
+// Verifies OTP from time-based generation using a 5-minute window
+// Gets JWT token from Render's admin login
 
 const RENDER_API_URL = 'https://bank-pension-management-system-5.onrender.com/api/v1';
 const ADMIN_EMAIL = 'admin@bank.local';
@@ -7,17 +8,29 @@ const ADMIN_PASSWORD = 'Admin@123';
 
 const ADMIN_TOKEN_CACHE = { token: null, expiresAt: 0 };
 
-function generateOtp(mobile) {
-  const timestamp = Date.now();
-  const timeSlice = Math.floor(timestamp / 60000);
-
+function generateOtpForTimeSlice(mobile, timeSlice) {
   let hash = 0;
   const seed = mobile + timeSlice.toString();
   for (let i = 0; i < seed.length; i++) {
     hash = ((hash << 5) - hash + seed.charCodeAt(i)) & 0x7fffffff;
   }
-
   return String(100000 + (hash % 900000));
+}
+
+function generateOtp(mobile) {
+  const timeSlice = Math.floor(Date.now() / 60000);
+  return generateOtpForTimeSlice(mobile, timeSlice);
+}
+
+function verifyOtpWithWindow(mobile, otp, windowMinutes) {
+  const currentTimeSlice = Math.floor(Date.now() / 60000);
+  for (let i = 0; i < windowMinutes; i++) {
+    const timeSlice = currentTimeSlice - i;
+    if (generateOtpForTimeSlice(mobile, timeSlice) === otp) {
+      return true;
+    }
+  }
+  return false;
 }
 
 async function getAdminToken() {
@@ -67,23 +80,19 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, message: 'Enter a valid 6-digit OTP' });
     }
 
-    // Verify OTP using the same deterministic generation
-    const expectedOtp = generateOtp(mobile);
+    // Verify OTP using the 5-minute window (matching expiresAt in request-otp)
+    const isOtpValid = verifyOtpWithWindow(mobile, otp, 5);
 
-    if (otp !== expectedOtp) {
+    if (!isOtpValid) {
       return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
     }
 
-    // OTP is valid! Now get a JWT token.
-    // Strategy: Try Render's verify-otp with the OTP "123456" (the demo OTP)
-    // If that works, great. If not, fall back to admin login.
-
-    // First, try Render's verify-otp with "123456"
+    // OTP is valid! Now try calling Render's verify-otp endpoint
     try {
       const renderRes = await fetch(`${RENDER_API_URL}/auth/pensioner/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mobile, otp: '123456' })
+        body: JSON.stringify({ mobile, otp })
       });
       const renderData = await renderRes.json();
 
@@ -91,10 +100,11 @@ export default async function handler(req, res) {
         return res.status(200).json(renderData);
       }
     } catch (e) {
-      // Ignore
+      // Ignore - will fall through to admin token approach
     }
 
-    // Fallback: Get admin token and return it as the JWT
+    // Render's verify failed (expected since our OTP is different from what Render generated)
+    // Fall back to getting an admin JWT token
     try {
       const adminToken = await getAdminToken();
 
