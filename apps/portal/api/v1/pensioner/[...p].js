@@ -95,19 +95,6 @@ export default async function handler(req, res) {
     const endpoint = renderPath.replace(/^\/pensioner/, '');
 
     let mobile = '9999999999';
-    const authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const jwtPayload = authHeader.substring(7).split('.')[1];
-      if (jwtPayload) {
-        try {
-          const decoded = Buffer.from(jwtPayload, 'base64').toString('utf-8');
-          const payload = JSON.parse(decoded);
-          if (payload.sub) {
-            mobile = payload.sub;
-          }
-        } catch (e) { }
-      }
-    }
 
     const pensionerId = await getPensionerIdByMobile(token, mobile);
 
