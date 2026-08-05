@@ -7,8 +7,5 @@
     "env": {
       "VITE_API_URL": "/api/v1"
     }
-  },
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
+  }
 }
