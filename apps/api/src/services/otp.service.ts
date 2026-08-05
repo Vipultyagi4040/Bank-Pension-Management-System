@@ -19,9 +19,11 @@ export async function createOtp(mobile: string) {
     console.log(`[DEV OTP] ${mobile}: ${code}`);
   }
 
+  const isDemoMode = env.NODE_ENV === "development" || process.env.OTP_DEMO_MODE === "true";
+
   return {
     expiresAt,
-    developmentOtp: (env.NODE_ENV === "development" || env.OTP_DEMO_MODE === "true" || process.env.OTP_DEMO_MODE === "true") ? code : undefined
+    developmentOtp: isDemoMode ? code : undefined
   };
 }
 
